@@ -14,4 +14,14 @@ all:
 	ocamlfind ocamlc -package piqi.runtime -c riak_piqi.ml
 	ocamlfind ocamlc -package piqi.runtime -c riak_kv_piqi.ml
 	ocamlfind ocamlc -package piqi.runtime -c riak_search_piqi.ml
-	ocamlfind ocamlc -o foo -package Unix -package piqi.runtime -linkpkg Riak_piqi.cmo Riak_kv_piqi.cmo riak.ml
+	ocamlfind ocamlc -package Unix -package piqi.runtime Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo -c Riak.mli
+	ocamlfind ocamlc -package Unix -package piqi.runtime Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo -c Riak.ml
+	ocamlfind ocamlc -o foo -package Unix -package piqi.runtime -linkpkg Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo Riak.cmo Test.ml
+
+clean:
+	rm -f *.cmo
+	rm -f *.cmi
+	rm -f *.proto.piqi
+	rm -f riak_kv_piqi.ml
+	rm -f riak_piqi.ml
+	rm -f riak_search_piqi.ml
