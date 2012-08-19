@@ -1,8 +1,9 @@
 riak-ocaml-client
 =====
-© 2012 Dave Parfitt
 
-riak-ocaml-client is a Riak 1.2 Protobuffs-only client.
+**© 2012 Dave Parfitt**
+
+riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
 *This is a work in progress. I hope to have it finished up by the end of August 2012.*
 
