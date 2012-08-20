@@ -26,7 +26,7 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
 The following program makes a connection to Riak and sends a ping message. 
 
-```
+
 <pre style="background:#fff;color:#000"><span style="color:#ff7800">open</span> <span style="color:#3b5bb5">Riak</span>
 <span style="color:#ff7800">open</span> <span style="color:#3b5bb5">Sys</span>
 <span style="color:#ff7800">open</span> <span style="color:#3b5bb5">Unix</span>
@@ -44,7 +44,6 @@ handle_unix_error client <span style="color:#3b5bb5">()</span>;;
 
 </pre>
 
-```
 		
 Compile this example with the following:
 
