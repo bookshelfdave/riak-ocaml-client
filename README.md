@@ -26,23 +26,23 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
 The following program makes a connection to Riak and sends a ping message. 
 
+```
+open Riak
+open Sys
+open Unix
 
-<pre style="background:#fff;color:#000"><span style="color:#ff7800">open</span> <span style="color:#3b5bb5">Riak</span>
-<span style="color:#ff7800">open</span> <span style="color:#3b5bb5">Sys</span>
-<span style="color:#ff7800">open</span> <span style="color:#3b5bb5">Unix</span>
-
-<span style="color:#ff7800">let</span> client<span style="color:#3b5bb5">()</span> <span style="color:#ff7800">=</span>
-    <span style="color:#ff7800">let</span> conn <span style="color:#ff7800">=</span> riak_connect <span style="color:#409b1c">"127.0.0.1"</span> <span style="color:#3b5bb5">8081</span> <span style="color:#ff7800">in</span>
-    <span style="color:#ff7800">let</span> _ <span style="color:#ff7800">=</span> <span style="color:#ff7800">match</span> riak_ping conn <span style="color:#ff7800">with</span>
-        <span style="color:#ff7800">|</span> <span style="color:#3b5bb5">true</span>  -> print_endline(<span style="color:#409b1c">"Pong"</span>)
-        <span style="color:#ff7800">|</span> <span style="color:#3b5bb5">false</span> -> print_endline(<span style="color:#409b1c">"Error"</span>)
-    <span style="color:#ff7800">in</span>
+let client() =
+    let conn = riak_connect "127.0.0.1" 8081 in
+    let _ = match riak_ping conn with
+        | true  -> print_endline("Pong")
+        | false -> print_endline("Error")
+    in
     riak_disconnect conn;
-    exit <span style="color:#3b5bb5">0</span>;;    
+    exit 0;;    
 
-handle_unix_error client <span style="color:#3b5bb5">()</span>;;
+handle_unix_error client ();;
 
-</pre>
+```
 
 		
 Compile this example with the following:
