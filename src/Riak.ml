@@ -64,6 +64,8 @@ type riak_connection = {
   inc : in_channel;
   outc : out_channel;
   debug : bool;
+  clientid : string option;
+  vclocks : string option; (* need some type of a map here *)
 }
 
 type riak_object = {
@@ -309,7 +311,15 @@ let riak_connect hostname portnum =
     connect riaksocket (ADDR_INET(server_addr, portnum));
     let cout = out_channel_of_descr riaksocket in
     let cin  = in_channel_of_descr riaksocket in
-      { host=hostname; port=portnum; sock=riaksocket; inc=cin; outc=cout; debug=false;}
+      { host=hostname; 
+	port=portnum; 
+	sock=riaksocket; 
+	inc=cin; 
+	outc=cout; 
+	debug=false;
+	clientid=None;
+	vclocks = None; 
+	}
 
 let riak_disconnect (conn:riak_connection) =
   close conn.sock
@@ -517,17 +527,3 @@ let riak_search_query (conn:riak_connection) query index options =
   let num_found = resp.Rpb_search_query_resp.num_found in
   ([], max_score, num_found)
 
-(* test fn for development *)
-(* let client () =
-  let conn = riak_connect "127.0.0.1" 8081 in
-  let _ = match riak_ping conn with
-    | true -> print_endline("Pong")
-    | false -> print_endline("Bad response from server") in
-  let (node,version) = riak_get_server_info conn in
-  print_endline ("Node: " ^ node ^ ", Version: " ^ version);
-
-  riak_disconnect conn;
-  exit 0;;
-
-handle_unix_error client ();;
-*)

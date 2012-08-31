@@ -16,7 +16,7 @@ all:
 	ocamlfind ocamlc -package piqi.runtime -c riak_search_piqi.ml
 	ocamlfind ocamlc -package Unix -package piqi.runtime Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo -c Riak.mli
 	ocamlfind ocamlc -package Unix -package piqi.runtime Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo -c Riak.ml
-	ocamlfind ocamlc -o foo -package Unix -package piqi.runtime -linkpkg Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo Riak.cmo Test.ml
+	ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -linkpkg Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo Riak.cmo Test.ml
 
 #install:
 #	ocamlfind install Riak META Riak.cmi Riak.cmo Riak.mli 

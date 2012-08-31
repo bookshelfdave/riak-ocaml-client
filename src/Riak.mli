@@ -69,6 +69,8 @@ type riak_connection = {
   inc : in_channel;
   outc : out_channel;
   debug : bool;
+  clientid : string option;
+  vclocks : string option; (* need some type of a map here *)
 }
 
 type riak_object = {
