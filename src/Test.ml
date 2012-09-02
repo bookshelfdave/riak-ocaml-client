@@ -39,6 +39,7 @@ let test_case_invalid_network _ =
 
 
 let test_case_server_info _ =
+  (* ie, don't connect to anything less than 1.2? *)
   ()
 
 

@@ -75,6 +75,7 @@ type riak_object = {
   obj_key : string option;
   obj_exists : bool;
 }
+
 type riak_get_option =
     Get_r of Riak_kv_piqi.uint32
   | Get_pr of Riak_kv_piqi.uint32
@@ -83,6 +84,7 @@ type riak_get_option =
   | Get_if_modified of string
   | Get_head of bool
   | Get_deleted_vclock of bool
+
 type riak_put_option =
     Put_w of Riak_kv_piqi.uint32
   | Put_dw of Riak_kv_piqi.uint32
@@ -91,6 +93,7 @@ type riak_put_option =
   | Put_if_not_modified of bool
   | Put_if_none_match of bool
   | Put_return_head of bool
+
 type riak_del_option =
     Del_rw of Riak_kv_piqi.uint32
   | Del_vclock of string
@@ -99,6 +102,7 @@ type riak_del_option =
   | Del_pr of Riak_kv_piqi.uint32
   | Del_pw of Riak_kv_piqi.uint32
   | Del_dw of Riak_kv_piqi.uint32
+
 type riak_search_option =
     Search_rows of Riak_kv_piqi.uint32
   | Search_start of Riak_kv_piqi.uint32
@@ -109,6 +113,24 @@ type riak_search_option =
   | Search_fl of string list
   | Search_presort of string
 
+type riak_tunable_cap =
+  | Riak_value_one
+  | Riak_value_quorum
+  | Riak_value_all
+  | Riak_value_default
+  | Riak_value of Riak_kv_piqi.uint32
+
+(* TODO - VERIFY these numbers! *)
+let get_riak_tunable_cap v =
+  match v with 
+    | Riak_value_one     -> -2l
+    | Riak_value_quorum  -> -3l
+    | Riak_value_all     -> -4l
+    | Riak_value_default -> -5l
+    | Riak_value n       -> n
+
+
+(* http://wiki.basho.com/PBC-Store-Object.html *)
 
 exception RiakException of string * Riak_piqi.uint32
 
