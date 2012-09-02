@@ -76,43 +76,6 @@ type riak_object = {
   obj_exists : bool;
 }
 
-type riak_get_option =
-    Get_r of Riak_kv_piqi.uint32
-  | Get_pr of Riak_kv_piqi.uint32
-  | Get_basic_quorum of bool
-  | Get_notfound_ok of bool
-  | Get_if_modified of string
-  | Get_head of bool
-  | Get_deleted_vclock of bool
-
-type riak_put_option =
-    Put_w of Riak_kv_piqi.uint32
-  | Put_dw of Riak_kv_piqi.uint32
-  | Put_return_body of bool
-  | Put_pw of Riak_kv_piqi.uint32
-  | Put_if_not_modified of bool
-  | Put_if_none_match of bool
-  | Put_return_head of bool
-
-type riak_del_option =
-    Del_rw of Riak_kv_piqi.uint32
-  | Del_vclock of string
-  | Del_r of Riak_kv_piqi.uint32
-  | Del_w of Riak_kv_piqi.uint32
-  | Del_pr of Riak_kv_piqi.uint32
-  | Del_pw of Riak_kv_piqi.uint32
-  | Del_dw of Riak_kv_piqi.uint32
-
-type riak_search_option =
-    Search_rows of Riak_kv_piqi.uint32
-  | Search_start of Riak_kv_piqi.uint32
-  | Search_sort of string
-  | Search_filter of string
-  | Search_df of string
-  | Search_op of string
-  | Search_fl of string list
-  | Search_presort of string
-
 type riak_tunable_cap =
   | Riak_value_one
   | Riak_value_quorum
@@ -128,6 +91,44 @@ let get_riak_tunable_cap v =
     | Riak_value_all     -> -4l
     | Riak_value_default -> -5l
     | Riak_value n       -> n
+
+
+type riak_get_option =
+    Get_r of riak_tunable_cap
+  | Get_pr of riak_tunable_cap
+  | Get_basic_quorum of bool
+  | Get_notfound_ok of bool
+  | Get_if_modified of string
+  | Get_head of bool
+  | Get_deleted_vclock of bool
+
+type riak_put_option =
+    Put_w of riak_tunable_cap
+  | Put_dw of riak_tunable_cap
+  | Put_return_body of bool
+  | Put_pw of riak_tunable_cap
+  | Put_if_not_modified of bool
+  | Put_if_none_match of bool
+  | Put_return_head of bool
+
+type riak_del_option =
+    Del_rw of riak_tunable_cap
+  | Del_vclock of string
+  | Del_r of riak_tunable_cap
+  | Del_w of riak_tunable_cap
+  | Del_pr of riak_tunable_cap
+  | Del_pw of riak_tunable_cap
+  | Del_dw of riak_tunable_cap
+
+type riak_search_option =
+    Search_rows of Riak_kv_piqi.uint32
+  | Search_start of Riak_kv_piqi.uint32
+  | Search_sort of string
+  | Search_filter of string
+  | Search_df of string
+  | Search_op of string
+  | Search_fl of string list
+  | Search_presort of string
 
 
 (* http://wiki.basho.com/PBC-Store-Object.html *)
@@ -235,19 +236,33 @@ let rec process_get_options opts req =
     | (o::os) ->
       match o with
         | Get_r v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.r = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.r = 
+                  Some (get_riak_tunable_cap v) }
         | Get_pr v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.pr = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.pr = 
+                  Some (get_riak_tunable_cap v) }
         | Get_basic_quorum v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.basic_quorum = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.basic_quorum = 
+                  Some v }
         | Get_notfound_ok v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.notfound_ok = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.notfound_ok = 
+                  Some v }
         | Get_if_modified v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.if_modified = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.if_modified = 
+                  Some v }
         | Get_head v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.head = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.head = 
+                  Some v }
         | Get_deleted_vclock v ->
-          process_get_options os { req with Riak_kv_piqi.Rpb_get_req.deletedvclock = Some v }
+            process_get_options os 
+              { req with Riak_kv_piqi.Rpb_get_req.deletedvclock = 
+                  Some v }
 
 
 let rec process_put_options opts req =
@@ -256,19 +271,33 @@ let rec process_put_options opts req =
     | (o::os) ->
       match o with
         | Put_w v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.w = Some v }
+          process_put_options os 
+            { req with Riak_kv_piqi.Rpb_put_req.w = 
+                Some (get_riak_tunable_cap v) }
         | Put_dw v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.dw = Some v }
+            process_put_options os 
+              { req with Riak_kv_piqi.Rpb_put_req.dw = 
+                  Some (get_riak_tunable_cap v) }
         | Put_return_body v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.return_body = Some v }
+            process_put_options os 
+              { req with Riak_kv_piqi.Rpb_put_req.return_body = 
+                  Some v }
         | Put_pw v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.pw = Some v }
+            process_put_options os 
+              { req with Riak_kv_piqi.Rpb_put_req.pw = 
+                  Some (get_riak_tunable_cap v) }
         | Put_if_not_modified v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.if_not_modified = Some v }
+            process_put_options os 
+              { req with Riak_kv_piqi.Rpb_put_req.if_not_modified = 
+                  Some v }
         | Put_if_none_match v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.if_none_match = Some v }
+            process_put_options os 
+              { req with Riak_kv_piqi.Rpb_put_req.if_none_match = 
+                  Some v }
         | Put_return_head v ->
-          process_put_options os { req with Riak_kv_piqi.Rpb_put_req.return_head = Some v }
+            process_put_options os 
+              { req with Riak_kv_piqi.Rpb_put_req.return_head = 
+                  Some v }
 
 let rec process_del_options opts req =
   match opts with
@@ -276,19 +305,33 @@ let rec process_del_options opts req =
     | (o::os) ->
       match o with
         | Del_rw v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.rw = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.rw = 
+                  Some (get_riak_tunable_cap v) }
         | Del_vclock v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.vclock = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.vclock = 
+                  Some v }
         | Del_r v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.r = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.r = 
+                  Some (get_riak_tunable_cap v) }
         | Del_w v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.w = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.w = 
+                  Some (get_riak_tunable_cap v) }
         | Del_pr v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.pr = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.pr = 
+                  Some (get_riak_tunable_cap v) }
         | Del_pw v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.pw = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.pw = 
+                  Some (get_riak_tunable_cap v) }
         | Del_dw v ->
-          process_del_options os { req with Riak_kv_piqi.Rpb_del_req.dw = Some v }
+            process_del_options os 
+              { req with Riak_kv_piqi.Rpb_del_req.dw = 
+                  Some (get_riak_tunable_cap v) }
 
 
 let rec process_search_options opts req =

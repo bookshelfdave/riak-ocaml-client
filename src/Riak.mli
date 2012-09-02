@@ -22,10 +22,18 @@
 -------------------------------------------------------------------
 *)
 
+type riak_tunable_cap =
+  | Riak_value_one
+  | Riak_value_quorum
+  | Riak_value_all
+  | Riak_value_default
+  | Riak_value of Riak_kv_piqi.uint32
+
+val get_riak_tunable_cap : riak_tunable_cap -> Riak_kv_piqi.uint32
 
 type riak_get_option =
-    Get_r of Riak_kv_piqi.uint32
-  | Get_pr of Riak_kv_piqi.uint32
+    Get_r of riak_tunable_cap
+  | Get_pr of riak_tunable_cap
   | Get_basic_quorum of bool
   | Get_notfound_ok of bool
   | Get_if_modified of string
@@ -33,22 +41,22 @@ type riak_get_option =
   | Get_deleted_vclock of bool
 
 type riak_put_option =
-    Put_w of Riak_kv_piqi.uint32
-  | Put_dw of Riak_kv_piqi.uint32
+    Put_w of riak_tunable_cap
+  | Put_dw of riak_tunable_cap
   | Put_return_body of bool
-  | Put_pw of Riak_kv_piqi.uint32
+  | Put_pw of riak_tunable_cap
   | Put_if_not_modified of bool
   | Put_if_none_match of bool
   | Put_return_head of bool
 
 type riak_del_option =
-    Del_rw of Riak_kv_piqi.uint32
+    Del_rw of riak_tunable_cap
   | Del_vclock of string
-  | Del_r of Riak_kv_piqi.uint32
-  | Del_w of Riak_kv_piqi.uint32
-  | Del_pr of Riak_kv_piqi.uint32
-  | Del_pw of Riak_kv_piqi.uint32
-  | Del_dw of Riak_kv_piqi.uint32
+  | Del_r of riak_tunable_cap
+  | Del_w of riak_tunable_cap
+  | Del_pr of riak_tunable_cap
+  | Del_pw of riak_tunable_cap
+  | Del_dw of riak_tunable_cap
 
 type riak_search_option =
     Search_rows of Riak_kv_piqi.uint32
