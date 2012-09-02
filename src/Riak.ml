@@ -154,8 +154,10 @@ let new_get_req bucket key =
   {
     Riak_kv_piqi.Rpb_get_req.bucket = bucket;
     Riak_kv_piqi.Rpb_get_req.key = key;
-    Riak_kv_piqi.Rpb_get_req.r = None;
-    Riak_kv_piqi.Rpb_get_req.pr = None;
+    Riak_kv_piqi.Rpb_get_req.r = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_get_req.pr = 
+      Some (get_riak_tunable_cap Riak_value_default);
     Riak_kv_piqi.Rpb_get_req.basic_quorum = None;
     Riak_kv_piqi.Rpb_get_req.notfound_ok = None;
     Riak_kv_piqi.Rpb_get_req.if_modified = None;
@@ -170,9 +172,12 @@ let new_put_req bucket key value =
     Riak_kv_piqi.Rpb_put_req.key = key;
     Riak_kv_piqi.Rpb_put_req.vclock = None;
     Riak_kv_piqi.Rpb_put_req.content = (new_content value);
-    Riak_kv_piqi.Rpb_put_req.w = None;
-    Riak_kv_piqi.Rpb_put_req.dw = None;
-    Riak_kv_piqi.Rpb_put_req.pw = None;
+    Riak_kv_piqi.Rpb_put_req.w = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_put_req.dw = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_put_req.pw = 
+      Some (get_riak_tunable_cap Riak_value_default);
     Riak_kv_piqi.Rpb_put_req.return_body = None;
     Riak_kv_piqi.Rpb_put_req.if_not_modified = None;
     Riak_kv_piqi.Rpb_put_req.if_none_match = None;
@@ -185,11 +190,16 @@ let new_del_req bucket key =
     Riak_kv_piqi.Rpb_del_req.key = key;
     Riak_kv_piqi.Rpb_del_req.rw = None;
     Riak_kv_piqi.Rpb_del_req.vclock = None;
-    Riak_kv_piqi.Rpb_del_req.r = None;
-    Riak_kv_piqi.Rpb_del_req.w = None;
-    Riak_kv_piqi.Rpb_del_req.pr = None;
-    Riak_kv_piqi.Rpb_del_req.pw = None;
-    Riak_kv_piqi.Rpb_del_req.dw = None;
+    Riak_kv_piqi.Rpb_del_req.r = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_del_req.w = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_del_req.pr = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_del_req.pw = 
+      Some (get_riak_tunable_cap Riak_value_default);
+    Riak_kv_piqi.Rpb_del_req.dw = 
+      Some (get_riak_tunable_cap Riak_value_default);
   }
 
 let new_list_keys_req bucket =
