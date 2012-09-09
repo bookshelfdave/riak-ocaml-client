@@ -21,6 +21,11 @@
  under the License.
 -------------------------------------------------------------------
 *)
+
+(* It would be nice to use someting like Core.Async, but I don't
+ * feel like dealing with the installation mess right now
+ * *)
+
 open Riak_piqi
 open Riak_search_piqi
 module KV = Riak_kv_piqi
@@ -57,6 +62,8 @@ let rpbIndexResp          = 26
 let rpbSearchQueryReq     = 27
 let rbpSearchQueryResp    = 28
 
+exception RiakException of string * Riak_piqi.uint32
+
 type riak_connection = {
   host : string;
   port : int;
@@ -65,7 +72,6 @@ type riak_connection = {
   outc : out_channel;
   debug : bool;
   clientid : string option;
-  vclocks : string option; (* need some type of a map here *)
 }
 
 type riak_object = {
@@ -133,7 +139,6 @@ type riak_search_option =
 
 (* http://wiki.basho.com/PBC-Store-Object.html *)
 
-exception RiakException of string * Riak_piqi.uint32
 
 let  (|>) x f = f x
 
@@ -386,15 +391,14 @@ let riak_connect hostname portnum =
     connect riaksocket (ADDR_INET(server_addr, portnum));
     let cout = out_channel_of_descr riaksocket in
     let cin  = in_channel_of_descr riaksocket in
-      { host=hostname; 
-	port=portnum; 
-	sock=riaksocket; 
-	inc=cin; 
-	outc=cout; 
-	debug=false;
-	clientid=None;
-	vclocks = None; 
-	}
+      { host=hostname;
+        port=portnum;
+        sock=riaksocket;
+        inc=cin;
+        outc=cout;
+        debug=false;
+        clientid=None;
+      }
 
 let riak_disconnect (conn:riak_connection) =
   close conn.sock
@@ -601,4 +605,5 @@ let riak_search_query (conn:riak_connection) query index options =
   let max_score = resp.Rpb_search_query_resp.max_score in
   let num_found = resp.Rpb_search_query_resp.num_found in
   ([], max_score, num_found)
+
 

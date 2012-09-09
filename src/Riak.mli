@@ -78,7 +78,6 @@ type riak_connection = {
   outc : out_channel;
   debug : bool;
   clientid : string option;
-  vclocks : string option; (* need some type of a map here *)
 }
 
 type riak_object = {
@@ -169,3 +168,6 @@ val riak_search_query :
   'a list * Riak_search_piqi.Riak_search_piqi.float32 option *
   Riak_search_piqi.Riak_search_piqi.uint32 option
 
+(* val riak_op : 'a -> ('a -> (riak_connection * 'a)) -> (riak_connection -> 'b)
+ * *)
+(*val riak_op : 'a -> ('a -> 'b * 'c) -> ('b -> 'd) -> 'c * 'd*)
