@@ -506,7 +506,8 @@ let riak_put (conn:riak_connection) bucket key value options vclock=
   let pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
   let resp = Riak_kv_piqi.parse_rpb_put_resp pbresp in
   let v = resp.Riak_kv_piqi.Rpb_put_resp.content in
-  List.map (riak_process_content bucket key vclock) v
+  let newvclock = resp.Riak_kv_piqi.Rpb_put_resp.vclock in
+  List.map (riak_process_content bucket key newvclock) v
 
 let riak_del (conn:riak_connection) bucket key options =
   let delreq = process_del_options options (new_del_req bucket key) in

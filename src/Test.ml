@@ -66,14 +66,12 @@ let test_case_put _ =
           let newkey = "foo" ^ string_of_int(n) in
           let newval = "bar" ^ string_of_int(n) in
           let objs = riak_put conn bucket (Some newkey) newval [Put_return_body true] None in
-          let f = List.hd objs in
-          show_option f.obj_vclock;
           let testval os =
             match os with
               | [] -> assert_failure "No objects returned from put"
               | o :: [] ->
                   (match o.obj_vclock with
-                    | Some v -> assert_string v
+                    | Some v -> assert_bool "Invalid vclock" (v <> "")
                     | None -> assert_failure "Put with return_body didn't return any data")
               | o :: tl -> assert_failure "Put returned sublings"
           in
