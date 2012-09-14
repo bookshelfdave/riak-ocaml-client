@@ -5,7 +5,7 @@ riak-ocaml-client
 
 riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
-*This is a work in progress. I hope to have it finished up by early September 2012. Pull requests accepted!*
+*This is a work in progress. I hope to have it finished up by RICON. Pull requests accepted!*
 
 ###Dependencies
 
@@ -16,7 +16,7 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 * [http://ounit.forge.ocamlcore.org/](OUnit)
 
 ###TODO
-    * cleanup get, put, M/R, search, index
+    * cleanup get, put, M/R, search, index, retry
 	* testing
 	* expand riak_connection to support a pool of IP's
 
