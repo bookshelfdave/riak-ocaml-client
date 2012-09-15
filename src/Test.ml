@@ -77,7 +77,7 @@ let test_case_put conn =
           let newkey = "foo" ^ string_of_int(n) in
           let newval = "bar" ^ string_of_int(n) in
           let objs =
-            riak_put conn bucket (Some newkey) 
+            riak_put conn bucket (Some newkey)
               newval [Put_return_body true] None in
           let testval os =
             match os with
@@ -148,9 +148,71 @@ let test_case_list_buckets conn =
     sleep(1);
     let buckets = riak_list_buckets conn in
       assert_bool "Buckets length > 0" (List.length buckets > 0);
-      let found = List.find (function x -> x = bucket) buckets in
-        assert_equal bucket found
+      assert_bool "Find a specific bucket"
+        (List.exists (function x -> x = bucket) buckets)
 
+let test_case_list_keys conn =
+  let bucket = testbucket() in
+  let rec put_many num =
+    match num with
+      | 0 -> ()
+      | n -> (let tk = "bucket_test" ^ string_of_int(n) in
+              let tv = "test_value" in
+                riak_put conn bucket (Some tk) tv [] None |> ignore;
+                put_many (n-1))
+  in
+    put_many 66;
+    let keys = riak_list_keys conn bucket in
+      assert_equal 66 (List.length keys);
+      assert_bool "Find a key"
+        (List.exists (function x -> x = "bucket_test54") keys)
+
+let test_case_get_bucket conn =
+  let bucket = testbucket() in
+  let gt = "bucket_test" in
+  let tv = "test_value" in
+    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    sleep(1);
+    let (n, multi) = riak_get_bucket conn bucket in
+      (match n with
+        | Some nval -> assert_bool "Valid bucket n value" (nval > 0l)
+        | None -> assert_failure "Unexpected default N value");
+      (match multi with
+        | Some multival -> assert_equal false multival
+        | None -> assert_failure "Unexpected default multi value")
+
+let test_case_set_bucket conn =
+  let bucket = testbucket() in
+  let gt = "bucket_test" in
+  let tv = "test_value" in
+    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    sleep(1);
+    riak_set_bucket conn bucket (Some 2l) (Some true);
+    sleep(1);
+    let (n, multi) = riak_get_bucket conn bucket in
+      (match n with
+         | Some nval -> assert_equal 2l nval
+         | None -> assert_failure "Unexpected N value");
+      (match multi with
+         | Some multival -> assert_equal true multival
+         | None -> ());
+      riak_set_bucket conn bucket (Some 1l) (None);
+      sleep(1);
+      let (n, multi) = riak_get_bucket conn bucket in
+        (match n with
+           | Some nval -> assert_equal 1l nval
+           | None -> assert_failure "Unexpected N value");
+        (match multi with
+           | Some multival -> assert_equal true multival
+           (* passing None doesn't overwrite the previous
+           * value *)
+           | None -> ())
+
+
+(* TODO: MapReduce, Index, Search */
+
+
+(* TODO: clean up test buckets when complete? *)
 (* these don't all need to be bracketed *)
 let suite = "Riak" >:::
 [
@@ -164,6 +226,9 @@ let suite = "Riak" >:::
   "test_case_get" >:: (bracket setup test_case_get teardown);
   "test_case_del" >:: (bracket setup test_case_del teardown);
   "test_case_list_buckets" >:: (bracket setup test_case_list_buckets teardown);
+  "test_case_list_keys" >:: (bracket setup test_case_list_keys teardown);
+  "test_case_get_bucket" >:: (bracket setup test_case_get_bucket teardown);
+  "test_case_set_bucket" >:: (bracket setup test_case_set_bucket teardown);
 ]
 
 let _ = run_test_tt_main suite
