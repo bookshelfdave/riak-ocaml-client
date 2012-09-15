@@ -118,33 +118,52 @@ let test_case_get conn =
   let bucket = testbucket() in
   let gt = "get_test" in
   let tv = "test_value" in
-  riak_del conn bucket "get_test" [] |> ignore;
-  riak_put conn bucket (Some gt) tv [] None |> ignore;
-  let v = riak_get conn bucket gt [] in
-  let asserts o =
-    let v = o.obj_value in
-    match v with
-      | None -> assert_failure "Get value not found"
-      | Some v -> assert_equal v tv
-  in
-    List.iter asserts v
+    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    let v = riak_get conn bucket gt [] in
+    let asserts o =
+      let v = o.obj_value in
+        match v with
+          | None -> assert_failure "Get value not found"
+          | Some v -> assert_equal v tv
+    in
+      List.iter asserts v
 
 
 let test_case_del conn =
-  ()
+  let bucket = testbucket() in
+  let gt = "del_test" in
+  let tv = "test_value" in
+    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    sleep(1);
+    riak_del conn bucket "del_test" [] |> ignore;
+    let v = riak_get conn bucket gt [] in
+     assert_equal (List.length v) 0
+
+
+let test_case_list_buckets conn =
+  let bucket = testbucket() in
+  let gt = "bucket_test" in
+  let tv = "test_value" in
+    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    sleep(1);
+    let buckets = riak_list_buckets conn in
+      assert_bool "Buckets length > 0" (List.length buckets > 0);
+      let found = List.find (function x -> x = bucket) buckets in
+        assert_equal bucket found
 
 (* these don't all need to be bracketed *)
 let suite = "Riak" >:::
 [
   "test_case_ping" >:: (bracket setup test_case_ping teardown);
   "test_case_ping_fail" >:: (bracket setup test_case_ping_fail teardown);
-  "test_case_invalid_network" >:: 
+  "test_case_invalid_network" >::
     (bracket setup test_case_invalid_network teardown);
   "test_case_client_id" >:: (bracket setup test_case_client_id teardown);
   "test_case_server_info" >:: (bracket setup test_case_server_info teardown);
   "test_case_put" >:: (bracket setup test_case_put teardown);
   "test_case_get" >:: (bracket setup test_case_get teardown);
   "test_case_del" >:: (bracket setup test_case_del teardown);
+  "test_case_list_buckets" >:: (bracket setup test_case_list_buckets teardown);
 ]
 
 let _ = run_test_tt_main suite
