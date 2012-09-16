@@ -63,6 +63,21 @@ let rpbSearchQueryReq     = 27
 let rbpSearchQueryResp    = 28
 
 exception RiakException of string * Riak_piqi.uint32
+exception RiakSiblingException of string
+
+type riak_object = {
+  obj_value : string option;
+  obj_vclock : string option;
+  obj_bucket : string;
+  obj_key : string option;
+  obj_exists : bool;
+}
+
+type riak_connection_options = {
+  riak_conn_use_nagal : bool;
+  riak_conn_retries : int;
+  riak_conn_resolve_conflicts : (riak_object list -> riak_object option)
+}
 
 type riak_connection = {
   host : string;
@@ -72,14 +87,7 @@ type riak_connection = {
   outc : out_channel;
   debug : bool;
   clientid : string option;
-}
-
-type riak_object = {
-  obj_value : string option;
-  obj_vclock : string option;
-  obj_bucket : string;
-  obj_key : string option;
-  obj_exists : bool;
+  conn_options : riak_connection_options;
 }
 
 type riak_tunable_cap =
@@ -377,13 +385,33 @@ let debug conn msg =
     | true -> print_endline(msg)
     | false -> ()
 
-let riak_connect hostname portnum =
+let set_nagle fd newval =
+  try Unix.setsockopt fd Unix.TCP_NODELAY newval
+  with Unix.Unix_error (e, _, _) ->
+    print_endline ("Error setting TCP_NODELAY" ^ (Unix.error_message e))
+
+(* The default conflict resolver. You probably don't want to use this *)
+let default_resolver items =
+  match items with
+    | [] -> None
+    | hd :: [] -> Some hd
+    | hd :: tl -> raise (RiakSiblingException "Siblings found - cannot resolve")
+
+let riak_connection_defaults =
+  {
+    riak_conn_use_nagal = false;
+    riak_conn_retries = 3;
+    riak_conn_resolve_conflicts = default_resolver;
+  }
+
+let riak_connect hostname portnum options =
   let server_addr =
     try (gethostbyname hostname).h_addr_list.(0)
     with Not_found ->
       prerr_endline (hostname ^ ": Host not found");
       exit 2 in
   let riaksocket = socket PF_INET SOCK_STREAM 0 in
+    set_nagle riaksocket options.riak_conn_use_nagal;
     connect riaksocket (ADDR_INET(server_addr, portnum));
     let cout = out_channel_of_descr riaksocket in
     let cin  = in_channel_of_descr riaksocket in
@@ -394,7 +422,11 @@ let riak_connect hostname portnum =
         outc=cout;
         debug=false;
         clientid=None;
+        conn_options=options;
       }
+
+let riak_connect_with_defaults hostname portnum =
+  riak_connect hostname portnum riak_connection_defaults
 
 let riak_disconnect (conn:riak_connection) =
   close conn.sock
@@ -494,9 +526,15 @@ let riak_get (conn:riak_connection) bucket key options =
   let resp = Riak_kv_piqi.parse_rpb_get_resp pbresp in
   let v = resp.Riak_kv_piqi.Rpb_get_resp.content in
   let vclock = resp.Riak_kv_piqi.Rpb_get_resp.vclock in
-  List.map (riak_process_content bucket (Some key) vclock) v
+  let results = List.map (riak_process_content bucket (Some key) vclock) v in
+  conn.conn_options.riak_conn_resolve_conflicts results
 
-let riak_put (conn:riak_connection) bucket key value options vclock=
+let riak_put (conn:riak_connection) bucket key value options vclock =
+  (*let updatedvclock =
+    (match vclock with
+       | None ->
+           let objs = riak_get conn bucket key value [] vclock in
+       | Some _ -> ()) in*)
   let putreq = process_put_options options (new_put_req bucket key value) in
   let genreq = Riak_kv_piqi.gen_rpb_put_req putreq in
   let pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
@@ -601,3 +639,12 @@ let riak_search_query (conn:riak_connection) query index options =
   let max_score = resp.Rpb_search_query_resp.max_score in
   let num_found = resp.Rpb_search_query_resp.num_found in
   ([], max_score, num_found)
+
+
+let riak_exec hostname port fn =
+  (* TODO: handle exceptions *)
+  let conn = riak_connect hostname port riak_connection_defaults in
+  let result = fn conn in
+  riak_disconnect conn;
+  result
+

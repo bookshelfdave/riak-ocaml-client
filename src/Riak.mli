@@ -70,16 +70,6 @@ type riak_search_option =
 
 exception RiakException of string * Riak_piqi.uint32
 
-type riak_connection = {
-  host : string;
-  port : int;
-  sock : Unix.file_descr;
-  inc : in_channel;
-  outc : out_channel;
-  debug : bool;
-  clientid : string option;
-}
-
 type riak_object = {
   obj_value : string option;
   obj_vclock : string option;
@@ -88,8 +78,26 @@ type riak_object = {
   obj_exists : bool;
 }
 
+type riak_connection_options = {
+  riak_conn_use_nagal : bool;
+  riak_conn_retries : int;
+  riak_conn_resolve_conflicts : (riak_object list -> riak_object option)
+}
 
-val riak_connect : string -> int -> riak_connection
+type riak_connection = {
+  host : string;
+  port : int;
+  sock : Unix.file_descr;
+  inc : in_channel;
+  outc : out_channel;
+  debug : bool;
+  clientid : string option;
+  conn_options : riak_connection_options;
+}
+
+val riak_connect_with_defaults : string -> int -> riak_connection
+
+val riak_connect : string -> int -> riak_connection_options -> riak_connection
 
 val riak_disconnect : riak_connection -> unit
 
@@ -110,7 +118,7 @@ val print_riak_obj : riak_object -> unit
 val riak_get :
   riak_connection ->
   Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary -> riak_get_option list -> riak_object list
+  Riak_kv_piqi.Riak_kv_piqi.binary -> riak_get_option list -> riak_object option
 
 val riak_put :
   riak_connection ->
@@ -168,6 +176,5 @@ val riak_search_query :
   'a list * Riak_search_piqi.Riak_search_piqi.float32 option *
   Riak_search_piqi.Riak_search_piqi.uint32 option
 
-(* val riak_op : 'a -> ('a -> (riak_connection * 'a)) -> (riak_connection -> 'b)
- * *)
-(*val riak_op : 'a -> ('a -> 'b * 'c) -> ('b -> 'd) -> 'c * 'd*)
+val riak_exec : string -> int -> (riak_connection -> 'a) -> 'a
+

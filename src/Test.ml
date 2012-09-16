@@ -3,21 +3,6 @@ open Sys
 open Unix
 open OUnit
 
-(* test fn for development *)
-(*let client () =
-  let conn = riak_connect "127.0.0.1" 8081 in
-  let _ = match riak_ping conn with
-    | true -> print_endline("Pong")
-    | false -> print_endline("Bad response from server") in
-  let (node,version) = riak_get_server_info conn in
-  print_endline ("Node: " ^ node ^ ", Version: " ^ version);
-
-  riak_disconnect conn;
-  exit 0;;
-  (* handle_unix_error client ();; *)
-*)
-
-
 let  (|>) x f = f x
 
 let testbucket() =
@@ -31,9 +16,9 @@ let setup _ =
   try
     let ip = Sys.getenv("RIAK_IP") in
     let port = int_of_string(Sys.getenv("RIAK_PORT")) in
-      riak_connect ip port
+      riak_connect_with_defaults ip port
   with Not_found ->
-    riak_connect "127.0.0.1" 8081
+    riak_connect_with_defaults "127.0.0.1" 8081
 
 let teardown conn =
   riak_disconnect conn;
@@ -97,47 +82,43 @@ let test_case_put conn =
       | n ->
           let getkey = "foo" ^ string_of_int(n) in
           let getval = "bar" ^ string_of_int(n) in
-          let objs = riak_get conn bucket getkey [] in
-            match objs with
-              | [] -> assert_failure "No objects available to read"
-              | o :: [] ->
+          let obj = riak_get conn bucket getkey [] in
+            match obj with
+              | Some o ->
                   (match o.obj_value with
                      | Some v ->
                          assert_equal v getval;
                          getmany (n-1)
                      | None -> assert_failure "Invalid value at key")
-              | hd :: tl -> assert_failure "Sad panda"
+              | None -> assert_failure "Object not found"
   in
     putmany 1000;
     sleep(5);
     getmany 1000;;
-
 
 let test_case_get conn =
   let bucket = testbucket() in
   let gt = "get_test" in
   let tv = "test_value" in
     riak_put conn bucket (Some gt) tv [] None |> ignore;
-    let v = riak_get conn bucket gt [] in
-    let asserts o =
-      let v = o.obj_value in
-        match v with
-          | None -> assert_failure "Get value not found"
-          | Some v -> assert_equal v tv
-    in
-      List.iter asserts v
-
+    let result = riak_get conn bucket gt [] in
+      match result with
+        | None -> assert_failure "Get value not found"
+        | Some value ->
+            match value.obj_value with
+               | Some v -> assert_equal v tv
+               | None -> assert_failure "Get value empty"
 
 let test_case_del conn =
   let bucket = testbucket() in
   let gt = "del_test" in
   let tv = "test_value" in
     riak_put conn bucket (Some gt) tv [] None |> ignore;
-    sleep(1);
+    sleep(3);
     riak_del conn bucket "del_test" [] |> ignore;
-    let v = riak_get conn bucket gt [] in
-     assert_equal (List.length v) 0
-
+    match riak_get conn bucket gt [] with
+      | None -> ()
+      | Some _ -> assert_failure "Deleted value found. Sad panda"
 
 let test_case_list_buckets conn =
   let bucket = testbucket() in
@@ -242,6 +223,10 @@ let test_case_mapreduce conn =
           (List.exists (fun (v,p) ->
                           v = (Some "[[\"pizza data goes here\",1]]")) results)
 
+let test_with_connection _ =
+  let with_connection = riak_exec "127.0.0.1" 8081 in
+  with_connection (fun conn -> riak_ping conn) |> ignore
+
 
 (* TODO: Index, Search *)
 
@@ -264,6 +249,7 @@ let suite = "Riak" >:::
   "test_case_get_bucket" >:: (bracket setup test_case_get_bucket teardown);
   "test_case_set_bucket" >:: (bracket setup test_case_set_bucket teardown);
   "test_case_mapreduce" >:: (bracket setup test_case_mapreduce teardown);
+  "test_with_connection" >:: test_with_connection;
 ]
 
 let _ = run_test_tt_main suite
