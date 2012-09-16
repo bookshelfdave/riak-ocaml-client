@@ -136,15 +136,11 @@ type riak_search_option =
   | Search_fl of string list
   | Search_presort of string
 
-
-(* http://wiki.basho.com/PBC-Store-Object.html *)
-
-
 let  (|>) x f = f x
 
 let new_content value =
   { Riak_kv_piqi.Rpb_content.value = value;
-    Riak_kv_piqi.Rpb_content.content_type = Some "text/plain";
+    Riak_kv_piqi.Rpb_content.content_type = None;
     Riak_kv_piqi.Rpb_content.charset = None;
     Riak_kv_piqi.Rpb_content.content_encoding = None;
     Riak_kv_piqi.Rpb_content.vtag = None;
@@ -524,7 +520,7 @@ let riak_list_buckets (conn:riak_connection) =
 let riak_list_keys (conn:riak_connection) bucket =
   let lkreq = (new_list_keys_req bucket) in
   let genreq = Riak_kv_piqi.gen_rpb_list_keys_req lkreq in
-  let pred = function pbresp ->
+  let pred = fun pbresp ->
     let resp = Riak_kv_piqi.parse_rpb_list_keys_resp pbresp in
     let keys = resp.Riak_kv_piqi.Rpb_list_keys_resp.keys in
     match resp.Riak_kv_piqi.Rpb_list_keys_resp.isdone with
@@ -554,16 +550,15 @@ let riak_set_bucket (conn:riak_connection) bucket n mult =
   let _ = send_pb_message conn (Some genreq) rpbSetBucketReq rpbSetBucketResp in
   ()
 
-(* INCOMPLETE *)
 let riak_mapred (conn:riak_connection) req content_type =
-  let mrpred = function pbresp ->
+  let mrpred = fun pbresp ->
     let resp = Riak_kv_piqi.parse_rpb_map_red_resp pbresp in
     let phase = resp.Riak_kv_piqi.Rpb_map_red_resp.phase in
     let response = resp.Riak_kv_piqi.Rpb_map_red_resp.response in
     match resp.Riak_kv_piqi.Rpb_map_red_resp.isdone with
-      | None -> (false, Some (response,phase))
-      | Some true -> (true, Some (response,phase))
-      | Some false -> (false, Some (response,phase))
+      | None -> (false, Some (response, phase))
+      | Some true -> (true, None)
+      | Some false -> (false, Some (response, phase))
   in
   let mrreq = { Riak_kv_piqi.Rpb_map_red_req.request = req;
                 Riak_kv_piqi.Rpb_map_red_req.content_type = content_type; }

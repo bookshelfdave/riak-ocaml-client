@@ -35,15 +35,14 @@ let setup _ =
   with Not_found ->
     riak_connect "127.0.0.1" 8081
 
-let teardown _ =
+let teardown conn =
+  riak_disconnect conn;
   ()
 
 let test_case_ping conn =
-  let _ = match riak_ping conn with
+  match riak_ping conn with
     | true -> ()
-    | false -> assert_failure("Can't connect to Riak") 
-  in
-  riak_disconnect conn
+    | false -> assert_failure("Can't connect to Riak")
 
 let test_case_ping_fail _ =
   ()
@@ -149,7 +148,7 @@ let test_case_list_buckets conn =
     let buckets = riak_list_buckets conn in
       assert_bool "Buckets length > 0" (List.length buckets > 0);
       assert_bool "Find a specific bucket"
-        (List.exists (function x -> x = bucket) buckets)
+        (List.exists (fun x -> x = bucket) buckets)
 
 let test_case_list_keys conn =
   let bucket = testbucket() in
@@ -165,7 +164,7 @@ let test_case_list_keys conn =
     let keys = riak_list_keys conn bucket in
       assert_equal 66 (List.length keys);
       assert_bool "Find a key"
-        (List.exists (function x -> x = "bucket_test54") keys)
+        (List.exists (fun x -> x = "bucket_test54") keys)
 
 let test_case_get_bucket conn =
   let bucket = testbucket() in
@@ -208,8 +207,43 @@ let test_case_set_bucket conn =
            * value *)
            | None -> ())
 
+let show_int_option v =
+  match v with
+    | None -> print_endline "NONE"
+    | Some x -> print_endline (Int32.to_string x)
 
-(* TODO: MapReduce, Index, Search */
+
+let test_case_mapreduce conn =
+  let bucket = testbucket() in
+    riak_put conn bucket (Some "foo")
+      "pizza data goes here" [] None |> ignore;
+    riak_put conn bucket (Some "bar")
+      "pizza pizza pizza pizza" [] None |> ignore;
+    riak_put conn bucket (Some "baz")
+      "nothing to see here" [] None |> ignore;
+    riak_put conn bucket (Some "bam")
+      "pizza pizza pizza" [] None |> ignore;
+    sleep(1);
+    let query = "{\"inputs\":\"" ^ bucket ^ "\", \"query\":[{\"map\":{\"language\":\"javascript\", " ^
+                "\"source\":\"function(riakObject) { var m =  riakObject.values[0].data.match(/pizza/g);" ^
+                "return  [[riakObject.values[0].data, (m ? m.length : 0 )]]; }\"}}]}" in
+    let results = riak_mapred conn query "application/json" in
+        assert_equal 4 (List.length results);
+        assert_bool "Check for match 3"
+          (List.exists (fun (v,p) ->
+                          v = (Some "[[\"pizza pizza pizza\",3]]")) results);
+        assert_bool "Check for match 0"
+          (List.exists (fun (v,p) ->
+                          v = (Some "[[\"nothing to see here\",0]]")) results);
+        assert_bool "Check for match 4"
+          (List.exists (fun (v,p) ->
+                          v = (Some "[[\"pizza pizza pizza pizza\",4]]")) results);
+        assert_bool "Check for match 1"
+          (List.exists (fun (v,p) ->
+                          v = (Some "[[\"pizza data goes here\",1]]")) results)
+
+
+(* TODO: Index, Search *)
 
 
 (* TODO: clean up test buckets when complete? *)
@@ -219,7 +253,7 @@ let suite = "Riak" >:::
   "test_case_ping" >:: (bracket setup test_case_ping teardown);
   "test_case_ping_fail" >:: (bracket setup test_case_ping_fail teardown);
   "test_case_invalid_network" >::
-    (bracket setup test_case_invalid_network teardown);
+  (bracket setup test_case_invalid_network teardown);
   "test_case_client_id" >:: (bracket setup test_case_client_id teardown);
   "test_case_server_info" >:: (bracket setup test_case_server_info teardown);
   "test_case_put" >:: (bracket setup test_case_put teardown);
@@ -229,6 +263,7 @@ let suite = "Riak" >:::
   "test_case_list_keys" >:: (bracket setup test_case_list_keys teardown);
   "test_case_get_bucket" >:: (bracket setup test_case_get_bucket teardown);
   "test_case_set_bucket" >:: (bracket setup test_case_set_bucket teardown);
+  "test_case_mapreduce" >:: (bracket setup test_case_mapreduce teardown);
 ]
 
 let _ = run_test_tt_main suite
