@@ -18,7 +18,6 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 ###TODO
     * test search, index
     * retries
-    * conflict resolver
     * better error handling	
 	* expand riak_connection to support a pool of IP's
 
@@ -34,7 +33,7 @@ open Sys
 open Unix
 
 let client() =
-    let conn = riak_connect "127.0.0.1" 8081 in
+    let conn = riak_connect_with_defaults "127.0.0.1" 8081 in
     let _ = match riak_ping conn with
         | true  -> print_endline("Pong")
         | false -> print_endline("Error")
