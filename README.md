@@ -5,7 +5,7 @@ riak-ocaml-client
 
 riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
-*This is a work in progress. I hope to have it finished up by RICON. Pull requests accepted!*
+*This is a work in progress. I hope to have it finished up by RICON 2012. Pull requests accepted! Please send email to diparfitt @ gmail with any questions. *
 
 ###Dependencies
 
@@ -52,6 +52,7 @@ Compile this example with the following:
 ```
    todo
 ```
+
 ### Development Guide
 
 **These docs are incomplete at the moment**
@@ -126,9 +127,11 @@ type riak_put_option =
 	How many primary nodes must be up when the write is attempted. Default is defined per bucket. See the Tunable CAP Options section below.
 	
 - **Put_if_not_modified** of *bool*
+
 	Update the value only if the vclock in the supplied object matches the one in the database.
 
 - **Put_if_none_match** of *bool*
+
 	Store the value only if this bucket/key combination are not already defined.
 
 - **Put_return_head** of *bool*
@@ -141,24 +144,31 @@ type riak_put_option =
 type riak_del_option =
 
 - **Del_rw** of *riak_tunable_cap*
+
 	How many replicas to delete before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.
 
 - **Del_vclock** of *string*
+
 	Opaque vector clock provided by an earlier Get request. Use to prevent deleting of objects that have been modified since the last get request.
  
 - **Del_r** of *riak_tunable_cap*
+
 	Read quorum. How many replicas need to agree when retrieving the object. Default is defined per bucket. See the Tunable CAP Options section below.
  
 - **Del_w** of *riak_tunable_cap*
+
 	Write quorum. How many replicas to write to before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.
  
 - **Del_pr** of *riak_tunable_cap*
+
 	Primary read quorum. How many primary replicas need to be available when retrieving the object. Default is defined per bucket. See the Tunable CAP Options section below.
  
 - **Del_pw** of *riak_tunable_cap*
+
 	How many primary nodes must be up when the write is attempted. Default is defined per bucket. See the Tunable CAP Options section below.
  
 - **Del_dw** of *riak_tunable_cap*
+
 	How many replicas to commit to durable storage before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.
 
 
