@@ -91,7 +91,7 @@ type riak_tunable_cap =
 
 (* TODO - VERIFY these numbers! *)
 let get_riak_tunable_cap v =
-  match v with 
+  match v with
     | Riak_value_one     -> -2l
     | Riak_value_quorum  -> -3l
     | Riak_value_all     -> -4l
@@ -100,7 +100,7 @@ let get_riak_tunable_cap v =
 
 
 type riak_get_option =
-    Get_r of riak_tunable_cap
+  | Get_r of riak_tunable_cap
   | Get_pr of riak_tunable_cap
   | Get_basic_quorum of bool
   | Get_notfound_ok of bool
@@ -109,7 +109,7 @@ type riak_get_option =
   | Get_deleted_vclock of bool
 
 type riak_put_option =
-    Put_w of riak_tunable_cap
+  | Put_w of riak_tunable_cap
   | Put_dw of riak_tunable_cap
   | Put_return_body of bool
   | Put_pw of riak_tunable_cap
@@ -118,7 +118,7 @@ type riak_put_option =
   | Put_return_head of bool
 
 type riak_del_option =
-    Del_rw of riak_tunable_cap
+  | Del_rw of riak_tunable_cap
   | Del_vclock of string
   | Del_r of riak_tunable_cap
   | Del_w of riak_tunable_cap
@@ -127,7 +127,7 @@ type riak_del_option =
   | Del_dw of riak_tunable_cap
 
 type riak_search_option =
-    Search_rows of Riak_kv_piqi.uint32
+  | Search_rows of Riak_kv_piqi.uint32
   | Search_start of Riak_kv_piqi.uint32
   | Search_sort of string
   | Search_filter of string
@@ -155,9 +155,9 @@ let new_get_req bucket key =
   {
     Riak_kv_piqi.Rpb_get_req.bucket = bucket;
     Riak_kv_piqi.Rpb_get_req.key = key;
-    Riak_kv_piqi.Rpb_get_req.r = 
+    Riak_kv_piqi.Rpb_get_req.r =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_get_req.pr = 
+    Riak_kv_piqi.Rpb_get_req.pr =
       Some (get_riak_tunable_cap Riak_value_default);
     Riak_kv_piqi.Rpb_get_req.basic_quorum = None;
     Riak_kv_piqi.Rpb_get_req.notfound_ok = None;
@@ -173,11 +173,11 @@ let new_put_req bucket key value =
     Riak_kv_piqi.Rpb_put_req.key = key;
     Riak_kv_piqi.Rpb_put_req.vclock = None;
     Riak_kv_piqi.Rpb_put_req.content = (new_content value);
-    Riak_kv_piqi.Rpb_put_req.w = 
+    Riak_kv_piqi.Rpb_put_req.w =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_put_req.dw = 
+    Riak_kv_piqi.Rpb_put_req.dw =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_put_req.pw = 
+    Riak_kv_piqi.Rpb_put_req.pw =
       Some (get_riak_tunable_cap Riak_value_default);
     Riak_kv_piqi.Rpb_put_req.return_body = None;
     Riak_kv_piqi.Rpb_put_req.if_not_modified = None;
@@ -191,15 +191,15 @@ let new_del_req bucket key =
     Riak_kv_piqi.Rpb_del_req.key = key;
     Riak_kv_piqi.Rpb_del_req.rw = None;
     Riak_kv_piqi.Rpb_del_req.vclock = None;
-    Riak_kv_piqi.Rpb_del_req.r = 
+    Riak_kv_piqi.Rpb_del_req.r =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_del_req.w = 
+    Riak_kv_piqi.Rpb_del_req.w =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_del_req.pr = 
+    Riak_kv_piqi.Rpb_del_req.pr =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_del_req.pw = 
+    Riak_kv_piqi.Rpb_del_req.pw =
       Some (get_riak_tunable_cap Riak_value_default);
-    Riak_kv_piqi.Rpb_del_req.dw = 
+    Riak_kv_piqi.Rpb_del_req.dw =
       Some (get_riak_tunable_cap Riak_value_default);
   }
 
@@ -247,32 +247,32 @@ let rec process_get_options opts req =
     | (o::os) ->
       match o with
         | Get_r v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.r = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.r =
                   Some (get_riak_tunable_cap v) }
         | Get_pr v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.pr = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.pr =
                   Some (get_riak_tunable_cap v) }
         | Get_basic_quorum v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.basic_quorum = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.basic_quorum =
                   Some v }
         | Get_notfound_ok v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.notfound_ok = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.notfound_ok =
                   Some v }
         | Get_if_modified v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.if_modified = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.if_modified =
                   Some v }
         | Get_head v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.head = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.head =
                   Some v }
         | Get_deleted_vclock v ->
-            process_get_options os 
-              { req with Riak_kv_piqi.Rpb_get_req.deletedvclock = 
+            process_get_options os
+              { req with Riak_kv_piqi.Rpb_get_req.deletedvclock =
                   Some v }
 
 
@@ -282,32 +282,32 @@ let rec process_put_options opts req =
     | (o::os) ->
       match o with
         | Put_w v ->
-          process_put_options os 
-            { req with Riak_kv_piqi.Rpb_put_req.w = 
+          process_put_options os
+            { req with Riak_kv_piqi.Rpb_put_req.w =
                 Some (get_riak_tunable_cap v) }
         | Put_dw v ->
-            process_put_options os 
-              { req with Riak_kv_piqi.Rpb_put_req.dw = 
+            process_put_options os
+              { req with Riak_kv_piqi.Rpb_put_req.dw =
                   Some (get_riak_tunable_cap v) }
         | Put_return_body v ->
-            process_put_options os 
-              { req with Riak_kv_piqi.Rpb_put_req.return_body = 
+            process_put_options os
+              { req with Riak_kv_piqi.Rpb_put_req.return_body =
                   Some v }
         | Put_pw v ->
-            process_put_options os 
-              { req with Riak_kv_piqi.Rpb_put_req.pw = 
+            process_put_options os
+              { req with Riak_kv_piqi.Rpb_put_req.pw =
                   Some (get_riak_tunable_cap v) }
         | Put_if_not_modified v ->
-            process_put_options os 
-              { req with Riak_kv_piqi.Rpb_put_req.if_not_modified = 
+            process_put_options os
+              { req with Riak_kv_piqi.Rpb_put_req.if_not_modified =
                   Some v }
         | Put_if_none_match v ->
-            process_put_options os 
-              { req with Riak_kv_piqi.Rpb_put_req.if_none_match = 
+            process_put_options os
+              { req with Riak_kv_piqi.Rpb_put_req.if_none_match =
                   Some v }
         | Put_return_head v ->
-            process_put_options os 
-              { req with Riak_kv_piqi.Rpb_put_req.return_head = 
+            process_put_options os
+              { req with Riak_kv_piqi.Rpb_put_req.return_head =
                   Some v }
 
 let rec process_del_options opts req =
@@ -316,32 +316,32 @@ let rec process_del_options opts req =
     | (o::os) ->
       match o with
         | Del_rw v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.rw = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.rw =
                   Some (get_riak_tunable_cap v) }
         | Del_vclock v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.vclock = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.vclock =
                   Some v }
         | Del_r v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.r = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.r =
                   Some (get_riak_tunable_cap v) }
         | Del_w v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.w = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.w =
                   Some (get_riak_tunable_cap v) }
         | Del_pr v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.pr = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.pr =
                   Some (get_riak_tunable_cap v) }
         | Del_pw v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.pw = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.pw =
                   Some (get_riak_tunable_cap v) }
         | Del_dw v ->
-            process_del_options os 
-              { req with Riak_kv_piqi.Rpb_del_req.dw = 
+            process_del_options os
+              { req with Riak_kv_piqi.Rpb_del_req.dw =
                   Some (get_riak_tunable_cap v) }
 
 
@@ -601,5 +601,3 @@ let riak_search_query (conn:riak_connection) query index options =
   let max_score = resp.Rpb_search_query_resp.max_score in
   let num_found = resp.Rpb_search_query_resp.num_found in
   ([], max_score, num_found)
-
-
