@@ -69,6 +69,7 @@ type riak_search_option =
   | Search_presort of string
 
 exception RiakException of string * Riak_piqi.uint32
+exception RiakSiblingException of string
 
 type riak_object = {
   obj_value : string option;

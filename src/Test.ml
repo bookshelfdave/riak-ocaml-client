@@ -12,13 +12,19 @@ let testbucket() =
     let tb = ("testbucket_" ^ string_of_int(bucketnum)) in
       tb;;
 
-let setup _ =
+let open_riak_connection clientid =
   try
     let ip = Sys.getenv("RIAK_IP") in
     let port = int_of_string(Sys.getenv("RIAK_PORT")) in
-      riak_connect_with_defaults ip port
+    let conn = riak_connect_with_defaults ip port in
+      riak_set_client_id conn clientid;
+      conn
   with Not_found ->
     riak_connect_with_defaults "127.0.0.1" 8081
+
+let setup _ =
+  open_riak_connection "oUnit"
+
 
 let teardown conn =
   riak_disconnect conn;
@@ -34,7 +40,6 @@ let test_case_ping_fail _ =
 
 let test_case_invalid_network _ =
   ()
-
 
 let test_case_server_info conn =
   let (node, version) = riak_get_server_info conn in
@@ -108,6 +113,24 @@ let test_case_get conn =
             match value.obj_value with
                | Some v -> assert_equal v tv
                | None -> assert_failure "Get value empty"
+
+let test_case_get_with_siblings _ =
+  let conn0 = open_riak_connection "Foo" in
+  let conn1 = open_riak_connection "Bar" in
+  let bucket = testbucket() in
+  let gst = "get_sibling_test" in
+    riak_set_bucket conn0 bucket None (Some true);
+    sleep(1);
+    riak_put conn0 bucket (Some gst) "test_sibling_value_1" [] None |> ignore;
+    riak_put conn1 bucket (Some gst) "test_sibling_value_2" [] None |> ignore;
+    (* make sure the default resolver throws exception when 
+     * siblings are found *)
+    try
+      riak_get conn1 bucket gst [] |> ignore;
+      assert_failure "Default sibling resolution should throw an exception"
+    with RiakSiblingException s ->
+      (* this is good *)
+      ()
 
 let test_case_del conn =
   let bucket = testbucket() in
@@ -223,7 +246,7 @@ let test_case_mapreduce conn =
           (List.exists (fun (v,p) ->
                           v = (Some "[[\"pizza data goes here\",1]]")) results)
 
-let test_with_connection _ =
+let test_case_with_connection _ =
   let with_connection = riak_exec "127.0.0.1" 8081 in
   with_connection (fun conn -> riak_ping conn) |> ignore
 
@@ -243,13 +266,14 @@ let suite = "Riak" >:::
   "test_case_server_info" >:: (bracket setup test_case_server_info teardown);
   "test_case_put" >:: (bracket setup test_case_put teardown);
   "test_case_get" >:: (bracket setup test_case_get teardown);
+  "test_case_get_with_siblings" >:: (bracket setup test_case_get_with_siblings teardown);
   "test_case_del" >:: (bracket setup test_case_del teardown);
   "test_case_list_buckets" >:: (bracket setup test_case_list_buckets teardown);
   "test_case_list_keys" >:: (bracket setup test_case_list_keys teardown);
   "test_case_get_bucket" >:: (bracket setup test_case_get_bucket teardown);
   "test_case_set_bucket" >:: (bracket setup test_case_set_bucket teardown);
   "test_case_mapreduce" >:: (bracket setup test_case_mapreduce teardown);
-  "test_with_connection" >:: test_with_connection;
+  "test_case_with_connection" >:: test_case_with_connection;
 ]
 
 let _ = run_test_tt_main suite

@@ -390,12 +390,16 @@ let set_nagle fd newval =
   with Unix.Unix_error (e, _, _) ->
     print_endline ("Error setting TCP_NODELAY" ^ (Unix.error_message e))
 
-(* The default conflict resolver. You probably don't want to use this *)
+(* The default conflict resolver.
+ * You probably don't want to use this as it will
+ * throw an exception if it finds siblings with bucket property
+ * allow_mult = true
+ *)
 let default_resolver items =
   match items with
     | [] -> None
     | hd :: [] -> Some hd
-    | hd :: tl -> raise (RiakSiblingException "Siblings found - cannot resolve")
+    | _ -> raise (RiakSiblingException "Siblings found - cannot resolve")
 
 let riak_connection_defaults =
   {
