@@ -192,29 +192,37 @@ type riak_del_option =
 type riak_search_option =
 
 - **Search_rows** of *Riak_kv_piqi.uint32*
+
 	 Specify the maximum number of results to return. Default is 10.
 	 
 - **Search_start** of *Riak_kv_piqi.uint32*
+
 	 Specify the starting result of the query. Useful for paging. Default is 0.
 	 
 - **Search_sort** of *string*
+
 	Sort on the specified field name. Default is “none”, which causes the results to be sorted in descending order by score.
 	
 - **Search_filter** of *string*
+
 	Filters the search by an additional query scoped to inline fields.
 	
 - **Search_df** of *string*
+
 	Use the provided field as the default. Overrides the “default_field” setting in the schema file.
 	
 - **Search_op** of *string*
+
 	Allowed settings are either “and” or “or”. Overrides the “default_op” setting in the schema file. Default is “or”.
 	
 - **Search_fl** of *string list*
+
 	Return fields limit (for ids only, generally).
 
 - **Search_presort** of *string*
+
 	Presort (key / score)
 
-
+---
 **© 2012 Dave Parfitt**
 
