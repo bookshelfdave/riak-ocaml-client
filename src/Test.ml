@@ -231,7 +231,7 @@ let test_case_mapreduce conn =
     let query = "{\"inputs\":\"" ^ bucket ^ "\", \"query\":[{\"map\":{\"language\":\"javascript\", " ^
                 "\"source\":\"function(riakObject) { var m =  riakObject.values[0].data.match(/pizza/g);" ^
                 "return  [[riakObject.values[0].data, (m ? m.length : 0 )]]; }\"}}]}" in
-    let results = riak_mapred conn query "application/json" in
+    let results = riak_mapred conn query Riak_MR_Json in
         assert_equal 4 (List.length results);
         assert_bool "Check for match 3"
           (List.exists (fun (v,p) ->

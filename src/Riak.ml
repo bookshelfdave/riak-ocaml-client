@@ -32,6 +32,8 @@ module KV = Riak_kv_piqi
 open Sys
 open Unix
 
+let riak_ocaml_client_version = "0.9"
+
 let rpbErrorResp          = 0
 let rpbPingReq            = 1  (* 0 length *)
 let rpbPingResp           = 2  (* pong - 0 length *)
@@ -89,6 +91,24 @@ type riak_connection = {
   clientid : string option;
   conn_options : riak_connection_options;
 }
+
+type riak_bucket = string
+type riak_key = string
+type riak_client_id = string
+type riak_mr_query = string
+type riak_mr_content_type = Riak_MR_Json | Riak_MR_Erlang
+type riak_2i_name = string
+type riak_2i_range_min = string
+type riak_2i_range_max = string
+type riak_search_query = string
+type riak_search_index = string
+type riak_node_id = string
+type riak_version = string
+
+let get_mr_content_type ct =
+  match ct with
+    | Riak_MR_Json -> "application/json"
+    | Riak_MR_Erlang -> "application/x-erlang-binary"
 
 type riak_tunable_cap =
   | Riak_value_one
@@ -602,8 +622,9 @@ let riak_mapred (conn:riak_connection) req content_type =
       | Some true -> (true, None)
       | Some false -> (false, Some (response, phase))
   in
+  let ctval = get_mr_content_type content_type in
   let mrreq = { Riak_kv_piqi.Rpb_map_red_req.request = req;
-                Riak_kv_piqi.Rpb_map_red_req.content_type = content_type; }
+                Riak_kv_piqi.Rpb_map_red_req.content_type = ctval; }
   in
   let genreq = Riak_kv_piqi.gen_rpb_map_red_req mrreq in
   let acc = send_pb_message_multi conn (Some genreq) rpbMapRedReq rpbMapRedResp mrpred in

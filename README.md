@@ -18,7 +18,7 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 ###TODO
     * test search, index
     * retries
-    * better error handling	
+    * better error handling
 	* expand riak_connection to support a pool of IP's
 
 ### Tutorial
@@ -39,13 +39,13 @@ let client() =
         | false -> print_endline("Error")
     in
     riak_disconnect conn;
-    exit 0;;    
+    exit 0;;
 
 handle_unix_error client ();;
 
 ```
 
-		
+
 Compile this example with the following:
 
 ```
@@ -59,10 +59,24 @@ Compile this example with the following:
 #### A note on types
  
 #### Connect/Disconnect
-To connect:
+To connect using default connection properties: 
 
-    let conn = riak_connect "127.0.0.1" 8081
-    
+```
+    let conn = riak_connect_with_defaults "127.0.0.1" 8081
+```   
+   
+#####Default connection properties:
+
+* disable Nagle's algorithm for better performance
+* try an operation 3 times before an exception is thrown
+* throw an exception if siblings are encountered    
+
+```
+	let options = { riak_connection_defaults with riak_conn_retries=5 } in
+	let conn = riak_connect "127.0.0.1" 8081 options in
+	...
+```
+
 To disconnect:    
 
     riak_disconnect conn
@@ -74,6 +88,17 @@ To disconnect:
 #### Server Info
 
 #### Get
+
+val **riak_get** : riak_connection -> string -> string -> riak_get_option list -> riak_object option
+
+**Example**	
+
+```
+let result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_head true] in
+…
+```
+
+
 
 **type riak_get_option =**
 

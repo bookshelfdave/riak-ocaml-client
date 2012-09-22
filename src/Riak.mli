@@ -96,6 +96,25 @@ type riak_connection = {
   conn_options : riak_connection_options;
 }
 
+type riak_bucket = string
+type riak_key = string
+type riak_client_id = string
+type riak_mr_query = string
+type riak_mr_content_type = Riak_MR_Json | Riak_MR_Erlang
+type riak_2i_name = string
+type riak_2i_range_min = string
+type riak_2i_range_max = string
+type riak_search_query = string
+type riak_search_index = string
+type riak_node_id = string
+type riak_version = string
+
+val get_mr_content_type : riak_mr_content_type -> string
+
+val riak_ocaml_client_version : string
+
+val riak_connection_defaults : riak_connection_options
+
 val riak_connect_with_defaults : string -> int -> riak_connection
 
 val riak_connect : string -> int -> riak_connection_options -> riak_connection
@@ -104,78 +123,71 @@ val riak_disconnect : riak_connection -> unit
 
 val riak_ping : riak_connection -> bool
 
-val riak_get_client_id : riak_connection -> Riak_kv_piqi.Riak_kv_piqi.binary
+val riak_get_client_id : riak_connection -> riak_client_id
 
-val riak_set_client_id : riak_connection -> Riak_kv_piqi.Riak_kv_piqi.binary -> unit
+val riak_set_client_id : riak_connection -> riak_client_id -> unit
 
 val riak_get_server_info :
-  riak_connection -> Riak_piqi.Riak_piqi.binary * Riak_piqi.Riak_piqi.binary
-
-val riak_process_content :
-  string -> string option -> string option -> Riak_kv_piqi.Rpb_content.t -> riak_object
+  riak_connection -> riak_node_id * riak_version
 
 val print_riak_obj : riak_object -> unit
 
 val riak_get :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary -> riak_get_option list -> riak_object option
+  riak_bucket ->
+  riak_key -> riak_get_option list -> riak_object option
 
 val riak_put :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary option ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
+  riak_bucket ->
+  riak_key option ->
+  string ->
   riak_put_option list -> string option -> riak_object list
 
 val riak_del :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary -> riak_del_option list -> unit
+  riak_bucket ->
+  riak_key -> riak_del_option list -> unit
 
-val riak_list_buckets : riak_connection -> Riak_kv_piqi.Riak_kv_piqi.binary list
+val riak_list_buckets : riak_connection -> riak_bucket list
 
 val riak_list_keys :
-  riak_connection -> Riak_kv_piqi.Riak_kv_piqi.binary -> Riak_kv_piqi.Riak_kv_piqi.binary list
+  riak_connection -> riak_bucket -> riak_key list
 
 val riak_get_bucket :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary -> Riak_kv_piqi.Riak_kv_piqi.uint32 option * bool option
+  riak_bucket -> int32 option * bool option
+
 
 val riak_set_bucket :
-  riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.uint32 option -> bool option -> unit
+  riak_connection -> riak_bucket -> int32 option -> bool option -> unit
 
 val riak_mapred :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  (Riak_kv_piqi.Riak_kv_piqi.binary option * Riak_kv_piqi.Riak_kv_piqi.uint32 option) list
-
-val riak_index :
-  riak_connection -> Riak_kv_piqi.Rpb_index_req.t -> Riak_kv_piqi.Riak_kv_piqi.binary list
+  riak_mr_query ->
+  riak_mr_content_type ->
+  (string option * int32 option) list
 
 val riak_index_eq :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary option -> Riak_kv_piqi.Riak_kv_piqi.binary list
+  riak_bucket ->
+  riak_2i_name ->
+  riak_key option -> string list
 
 val riak_index_range :
   riak_connection ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary ->
-  Riak_kv_piqi.Riak_kv_piqi.binary option ->
-  Riak_kv_piqi.Riak_kv_piqi.binary option -> Riak_kv_piqi.Riak_kv_piqi.binary list
+  riak_bucket ->
+  riak_2i_name ->
+  riak_2i_range_min option ->
+  riak_2i_range_max option -> string list
 
 val riak_search_query :
   riak_connection ->
-  Riak_search_piqi.Riak_search_piqi.binary ->
-  Riak_search_piqi.Riak_search_piqi.binary ->
+  riak_search_query ->
+  riak_search_index ->
   riak_search_option list ->
-  'a list * Riak_search_piqi.Riak_search_piqi.float32 option *
-  Riak_search_piqi.Riak_search_piqi.uint32 option
+  'a list * float option *
+  int32 option
 
 val riak_exec : string -> int -> (riak_connection -> 'a) -> 'a
 
