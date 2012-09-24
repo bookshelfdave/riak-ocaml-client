@@ -181,13 +181,22 @@ val riak_index_range :
   riak_2i_range_min option ->
   riak_2i_range_max option -> string list
 
+                                (*
 val riak_search_query :
   riak_connection ->
   riak_search_query ->
   riak_search_index ->
   riak_search_option list ->
-  'a list * float option *
-  int32 option
+  'a list * float option * int32 option
+                                 *)
+val riak_search_query :
+  riak_connection ->
+  string ->
+  string ->
+  riak_search_option list ->
+  (string * string option) list list *
+  Riak_search_piqi.Riak_search_piqi.float32 option *
+  Riak_search_piqi.Riak_search_piqi.uint32 option
 
 val riak_exec : string -> int -> (riak_connection -> 'a) -> 'a
 

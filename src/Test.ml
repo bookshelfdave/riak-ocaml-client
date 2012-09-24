@@ -250,9 +250,10 @@ let test_case_with_connection _ =
   let with_connection = riak_exec "127.0.0.1" 8081 in
   with_connection (fun conn -> riak_ping conn) |> ignore
 
-
 (* TODO: Index, Search *)
-
+let test_case_search conn =
+  let _ = riak_search_query conn "fox" "phrases_custom" [] in
+    ()
 
 (* TODO: clean up test buckets when complete? *)
 (* these don't all need to be bracketed *)

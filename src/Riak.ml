@@ -585,11 +585,6 @@ let riak_get (conn:riak_connection) bucket key options =
     riak_multi conn impl
 
 let riak_put (conn:riak_connection) bucket key value options vclock =
-  (*let updatedvclock =
-   (match vclock with
-   | None ->
-   let objs = riak_get conn bucket key value [] vclock in
-   | Some _ -> ()) in*)
   let impl() =
     let putreq = process_put_options options (new_put_req bucket key value) in
     let genreq = Riak_kv_piqi.gen_rpb_put_req putreq in
@@ -705,18 +700,25 @@ let riak_index_range conn bucket index min max =
     } in
   riak_index conn req
 
-(* INCOMPLETE *)
 let riak_search_query (conn:riak_connection) query index options =
+  let parse_docs docs =
+    List.map (fun f ->
+                let pairs = f.Rpb_search_doc.fields in
+                  List.map (fun pair ->
+                    let key = pair.Rpb_pair.key in
+                    let value = pair.Rpb_pair.value in
+                    (key,value)) pairs) docs
+  in
   let impl() =
     let searchreq = process_search_options options (new_search_query_req query index) in
     let genreq = gen_rpb_search_query_req searchreq in
     let pbresp = send_pb_message conn (Some genreq) rpbSearchQueryReq rbpSearchQueryResp in
     let resp = parse_rpb_search_query_resp pbresp in
-    (* TODO: parse rpb_pairs *)
-    let _ = resp.Rpb_search_query_resp.docs in
+    let docs = resp.Rpb_search_query_resp.docs in
+    let parsed_docs = parse_docs docs in
     let max_score = resp.Rpb_search_query_resp.max_score in
     let num_found = resp.Rpb_search_query_resp.num_found in
-      ([], max_score, num_found)
+      (parsed_docs, max_score, num_found)
   in
     riak_multi conn impl
 

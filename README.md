@@ -17,7 +17,6 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
 ###TODO
     * test search, index
-    * retries
     * better error handling
 	* expand riak_connection to support a pool of IP's
 
