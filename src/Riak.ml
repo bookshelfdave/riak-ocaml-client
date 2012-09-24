@@ -14,7 +14,7 @@
    http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing,
- software distributed under the License is distributed on an
+ software distributed under the Licese is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  KIND, either express or implied.  See the License for the
  specific language governing permissions and limitations
@@ -468,6 +468,7 @@ let send_msg (conn:riak_connection) (req:Piqirun.OBuf.t option) (reqid:int) =
   in
   flush conn.outc
 
+
 (* returns Piqirun.t *)
 (* TODO: THIS NEEDS CLEANUP! *)
 let recv_msg (conn:riak_connection) (respid:int)=
@@ -505,27 +506,54 @@ let send_pb_message_multi (conn:riak_connection) (req:Piqirun.OBuf.t option)
   send_msg conn req reqid;
   recv_more conn respid predicate []
 
+let rec try_many fn n last_exception =
+  match n with
+    | 0 ->
+        (match last_exception with
+           | None -> raise 
+                       (RiakException("Unknown exception",-2l))
+           | Some exc -> raise exc)
+    | count ->
+        try
+          fn()
+        with RiakException (msg,id) ->
+          try_many fn (count-1) (Some (RiakException (msg,id)))
+
+let riak_multi conn fn =
+  try_many fn conn.conn_options.riak_conn_retries None
+
 let riak_ping conn =
-  let _ = send_pb_message conn None rpbPingReq rpbPingResp in
-  true
+  let impl() =
+    let _ = send_pb_message conn None rpbPingReq rpbPingResp in
+      true
+  in
+    riak_multi conn impl
 
 let riak_get_client_id conn =
-  let pbresp = send_pb_message conn None rpbGetClientIdReq rpbGetClientIdResp in
-  let resp = Riak_kv_piqi.parse_rpb_get_client_id_resp pbresp in
-  resp.Riak_kv_piqi.Rpb_get_client_id_resp.client_id
+  let impl() =
+    let pbresp = send_pb_message conn None rpbGetClientIdReq rpbGetClientIdResp in
+    let resp = Riak_kv_piqi.parse_rpb_get_client_id_resp pbresp in
+      resp.Riak_kv_piqi.Rpb_get_client_id_resp.client_id
+  in 
+    riak_multi conn impl
 
 let riak_set_client_id conn newid =
-  let req = { Riak_kv_piqi.Rpb_set_client_id_req.client_id = newid } in
-  let genreq = Riak_kv_piqi.gen_rpb_set_client_id_req req in
-  let _ = send_pb_message conn (Some genreq) rpbSetClientIdReq rpbSetClientIdResp in
-  ()
+  let impl() =
+    let req = { Riak_kv_piqi.Rpb_set_client_id_req.client_id = newid } in
+    let genreq = Riak_kv_piqi.gen_rpb_set_client_id_req req in
+    let _ = send_pb_message conn (Some genreq) rpbSetClientIdReq rpbSetClientIdResp in
+      ()
+  in
+    riak_multi conn impl
 
 let riak_get_server_info conn =
-  let pbresp = send_pb_message conn None rpbGetServerInfoReq rpbGetServerInfoResp in
-  let resp = parse_rpb_get_server_info_resp pbresp in
-  (string_of_option resp.Rpb_get_server_info_resp.node,
-        string_of_option resp.Rpb_get_server_info_resp.server_version)
-
+  let impl() =
+    let pbresp = send_pb_message conn None rpbGetServerInfoReq rpbGetServerInfoResp in
+    let resp = parse_rpb_get_server_info_resp pbresp in
+      (string_of_option resp.Rpb_get_server_info_resp.node,
+       string_of_option resp.Rpb_get_server_info_resp.server_version)
+  in 
+    riak_multi conn impl
 
 (* TODO: rename *)
 let riak_process_content bucket key vclock item =
@@ -544,73 +572,94 @@ let print_riak_obj obj =
   print_endline (" key=" ^ string_of_option(obj.obj_key) ^ "}")
 
 let riak_get (conn:riak_connection) bucket key options =
-  let getreq = process_get_options options (new_get_req bucket key) in
-  let genreq = Riak_kv_piqi.gen_rpb_get_req getreq in
-  let pbresp = send_pb_message conn (Some genreq) rpbGetReq rpbGetResp in
-  let resp = Riak_kv_piqi.parse_rpb_get_resp pbresp in
-  let v = resp.Riak_kv_piqi.Rpb_get_resp.content in
-  let vclock = resp.Riak_kv_piqi.Rpb_get_resp.vclock in
-  let results = List.map (riak_process_content bucket (Some key) vclock) v in
-  conn.conn_options.riak_conn_resolve_conflicts results
+  let impl() =
+    let getreq = process_get_options options (new_get_req bucket key) in
+    let genreq = Riak_kv_piqi.gen_rpb_get_req getreq in
+    let pbresp = send_pb_message conn (Some genreq) rpbGetReq rpbGetResp in
+    let resp = Riak_kv_piqi.parse_rpb_get_resp pbresp in
+    let v = resp.Riak_kv_piqi.Rpb_get_resp.content in
+    let vclock = resp.Riak_kv_piqi.Rpb_get_resp.vclock in
+    let results = List.map (riak_process_content bucket (Some key) vclock) v in
+      conn.conn_options.riak_conn_resolve_conflicts results
+  in
+    riak_multi conn impl
 
 let riak_put (conn:riak_connection) bucket key value options vclock =
   (*let updatedvclock =
-    (match vclock with
-       | None ->
-           let objs = riak_get conn bucket key value [] vclock in
-       | Some _ -> ()) in*)
-  let putreq = process_put_options options (new_put_req bucket key value) in
-  let genreq = Riak_kv_piqi.gen_rpb_put_req putreq in
-  let pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
-  let resp = Riak_kv_piqi.parse_rpb_put_resp pbresp in
-  let v = resp.Riak_kv_piqi.Rpb_put_resp.content in
-  let newvclock = resp.Riak_kv_piqi.Rpb_put_resp.vclock in
-  List.map (riak_process_content bucket key newvclock) v
+   (match vclock with
+   | None ->
+   let objs = riak_get conn bucket key value [] vclock in
+   | Some _ -> ()) in*)
+  let impl() =
+    let putreq = process_put_options options (new_put_req bucket key value) in
+    let genreq = Riak_kv_piqi.gen_rpb_put_req putreq in
+    let pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
+    let resp = Riak_kv_piqi.parse_rpb_put_resp pbresp in
+    let v = resp.Riak_kv_piqi.Rpb_put_resp.content in
+    let newvclock = resp.Riak_kv_piqi.Rpb_put_resp.vclock in
+      List.map (riak_process_content bucket key newvclock) v
+  in
+    riak_multi conn impl
 
 let riak_del (conn:riak_connection) bucket key options =
-  let delreq = process_del_options options (new_del_req bucket key) in
-  let genreq = Riak_kv_piqi.gen_rpb_del_req delreq in
-  let _ = send_pb_message conn (Some genreq) rpbDelReq rpbDelResp in
-  ()
+  let impl() =
+    let delreq = process_del_options options (new_del_req bucket key) in
+    let genreq = Riak_kv_piqi.gen_rpb_del_req delreq in
+    let _ = send_pb_message conn (Some genreq) rpbDelReq rpbDelResp in
+      ()
+  in
+    riak_multi conn impl
 
 let riak_list_buckets (conn:riak_connection) =
-  let pbresp = send_pb_message conn None rpbListBucketsReq rpbListBucketsResp in
-  let resp = Riak_kv_piqi.parse_rpb_list_buckets_resp pbresp in
-  let buckets = resp.Riak_kv_piqi.Rpb_list_buckets_resp.buckets in
-  buckets
+  let impl() =
+    let pbresp = send_pb_message conn None rpbListBucketsReq rpbListBucketsResp in
+    let resp = Riak_kv_piqi.parse_rpb_list_buckets_resp pbresp in
+    let buckets = resp.Riak_kv_piqi.Rpb_list_buckets_resp.buckets in
+      buckets
+  in
+    riak_multi conn impl
 
 let riak_list_keys (conn:riak_connection) bucket =
-  let lkreq = (new_list_keys_req bucket) in
-  let genreq = Riak_kv_piqi.gen_rpb_list_keys_req lkreq in
-  let pred = fun pbresp ->
-    let resp = Riak_kv_piqi.parse_rpb_list_keys_resp pbresp in
-    let keys = resp.Riak_kv_piqi.Rpb_list_keys_resp.keys in
-    match resp.Riak_kv_piqi.Rpb_list_keys_resp.isdone with
-      | None -> (false, Some keys)
-      | Some true -> (true, Some keys)
-      | Some false -> (false, Some keys)
+  let impl() =
+    let lkreq = (new_list_keys_req bucket) in
+    let genreq = Riak_kv_piqi.gen_rpb_list_keys_req lkreq in
+    let pred = fun pbresp ->
+      let resp = Riak_kv_piqi.parse_rpb_list_keys_resp pbresp in
+      let keys = resp.Riak_kv_piqi.Rpb_list_keys_resp.keys in
+        match resp.Riak_kv_piqi.Rpb_list_keys_resp.isdone with
+          | None -> (false, Some keys)
+          | Some true -> (true, Some keys)
+          | Some false -> (false, Some keys)
+    in
+    let acc = send_pb_message_multi conn (Some genreq) rpbListKeysReq rpbListKeysResp pred in
+      List.flatten acc
   in
-  let acc = send_pb_message_multi conn (Some genreq) rpbListKeysReq rpbListKeysResp pred in
-  List.flatten acc
+    riak_multi conn impl
 
 let riak_get_bucket (conn:riak_connection) bucket =
-  let gbreq = { Riak_kv_piqi.Rpb_get_bucket_req.bucket = bucket} in
-  let genreq = Riak_kv_piqi.gen_rpb_get_bucket_req gbreq in
-  let pbresp = send_pb_message conn (Some genreq) rpbGetBucketReq rpbGetBucketResp in
-  let resp = Riak_kv_piqi.parse_rpb_get_bucket_resp pbresp in
-  let bprops = resp.Riak_kv_piqi.Rpb_get_bucket_resp.props in
-  ( bprops.Riak_kv_piqi.Rpb_bucket_props.n_val, bprops.Riak_kv_piqi.Rpb_bucket_props.allow_mult)
+  let impl() =
+    let gbreq = { Riak_kv_piqi.Rpb_get_bucket_req.bucket = bucket} in
+    let genreq = Riak_kv_piqi.gen_rpb_get_bucket_req gbreq in
+    let pbresp = send_pb_message conn (Some genreq) rpbGetBucketReq rpbGetBucketResp in
+    let resp = Riak_kv_piqi.parse_rpb_get_bucket_resp pbresp in
+    let bprops = resp.Riak_kv_piqi.Rpb_get_bucket_resp.props in
+      ( bprops.Riak_kv_piqi.Rpb_bucket_props.n_val, bprops.Riak_kv_piqi.Rpb_bucket_props.allow_mult)
+  in 
+    riak_multi conn impl
 
 let riak_set_bucket (conn:riak_connection) bucket n mult =
-  let bprops = { Riak_kv_piqi.Rpb_bucket_props.n_val = n;
-                 Riak_kv_piqi.Rpb_bucket_props.allow_mult = mult; }
+  let impl() =
+    let bprops = { Riak_kv_piqi.Rpb_bucket_props.n_val = n;
+                   Riak_kv_piqi.Rpb_bucket_props.allow_mult = mult; }
+    in
+    let sbreq = { Riak_kv_piqi.Rpb_set_bucket_req.bucket = bucket;
+                  Riak_kv_piqi.Rpb_set_bucket_req.props = bprops; }
+    in
+    let genreq = Riak_kv_piqi.gen_rpb_set_bucket_req sbreq in
+    let _ = send_pb_message conn (Some genreq) rpbSetBucketReq rpbSetBucketResp in
+      ()
   in
-  let sbreq = { Riak_kv_piqi.Rpb_set_bucket_req.bucket = bucket;
-                Riak_kv_piqi.Rpb_set_bucket_req.props = bprops; }
-  in
-  let genreq = Riak_kv_piqi.gen_rpb_set_bucket_req sbreq in
-  let _ = send_pb_message conn (Some genreq) rpbSetBucketReq rpbSetBucketResp in
-  ()
+    riak_multi conn impl
 
 let riak_mapred (conn:riak_connection) req content_type =
   let mrpred = fun pbresp ->
@@ -632,10 +681,13 @@ let riak_mapred (conn:riak_connection) req content_type =
 
 
 let riak_index conn req =
+  let impl() =
     let genreq = Riak_kv_piqi.gen_rpb_index_req req in
     let pbresp = send_pb_message conn (Some genreq) rpbIndexReq rpbIndexResp in
     let resp = Riak_kv_piqi.parse_rpb_index_resp pbresp in
     resp.Riak_kv_piqi.Rpb_index_resp.keys
+  in
+    riak_multi conn impl
 
 let riak_index_eq conn bucket index key =
   let req0 = new_index_req bucket index `eq in
@@ -655,16 +707,18 @@ let riak_index_range conn bucket index min max =
 
 (* INCOMPLETE *)
 let riak_search_query (conn:riak_connection) query index options =
-  let searchreq = process_search_options options (new_search_query_req query index) in
-  let genreq = gen_rpb_search_query_req searchreq in
-  let pbresp = send_pb_message conn (Some genreq) rpbSearchQueryReq rbpSearchQueryResp in
-  let resp = parse_rpb_search_query_resp pbresp in
-  (* TODO: parse rpb_pairs *)
-  let _ = resp.Rpb_search_query_resp.docs in
-  let max_score = resp.Rpb_search_query_resp.max_score in
-  let num_found = resp.Rpb_search_query_resp.num_found in
-  ([], max_score, num_found)
-
+  let impl() =
+    let searchreq = process_search_options options (new_search_query_req query index) in
+    let genreq = gen_rpb_search_query_req searchreq in
+    let pbresp = send_pb_message conn (Some genreq) rpbSearchQueryReq rbpSearchQueryResp in
+    let resp = parse_rpb_search_query_resp pbresp in
+    (* TODO: parse rpb_pairs *)
+    let _ = resp.Rpb_search_query_resp.docs in
+    let max_score = resp.Rpb_search_query_resp.max_score in
+    let num_found = resp.Rpb_search_query_resp.num_found in
+      ([], max_score, num_found)
+  in
+    riak_multi conn impl
 
 let riak_exec hostname port fn =
   (* TODO: handle exceptions *)
@@ -672,4 +726,5 @@ let riak_exec hostname port fn =
   let result = fn conn in
   riak_disconnect conn;
   result
+
 
