@@ -15,10 +15,12 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
    * On OSX, `brew install protobuf` if you are using Homebrew
 * [http://ounit.forge.ocamlcore.org/](OUnit)
 
-###TODO
-    * test search, index
-    * better error handling
-	* expand riak_connection to support a pool of IP's
+### Installation
+
+```
+make 
+make install
+```
 
 ### Tutorial
 
@@ -257,5 +259,11 @@ type riak_search_option =
 	Presort (key / score)
 
 ---
+
+###TODO
+    * test search, index
+    * better error handling
+
 **© 2012 Dave Parfitt**
+
 

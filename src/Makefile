@@ -1,4 +1,21 @@
-all:
+all: piqi nonnative native test
+	echo "Build complete"
+
+nonnative:
+	ocamlfind ocamlc -package piqi.runtime -c riak_piqi.ml
+	ocamlfind ocamlc -package piqi.runtime -c riak_kv_piqi.ml
+	ocamlfind ocamlc -package piqi.runtime -c riak_search_piqi.ml
+	ocamlfind ocamlc -package Unix -package piqi.runtime riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo -c riak.mli
+	ocamlfind ocamlc -package Unix -package piqi.runtime riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo -c riak.ml
+
+native:
+	ocamlfind ocamlopt -package piqi.runtime -c riak_piqi.ml
+	ocamlfind ocamlopt -package piqi.runtime -c riak_kv_piqi.ml
+	ocamlfind ocamlopt -package piqi.runtime -c riak_search_piqi.ml
+	ocamlfind ocamlopt -package Unix -package piqi.runtime Riak_piqi.cmx Riak_kv_piqi.cmx riak_search_piqi.cmx -c Riak.mli
+	ocamlfind ocamlopt -package Unix -package piqi.runtime Riak_piqi.cmx Riak_kv_piqi.cmx riak_search_piqi.cmx -c Riak.ml
+
+piqi:
 	piqi of-proto riak.proto
 	piqi of-proto riak_kv.proto
 	piqi of-proto riak_search.proto
@@ -11,15 +28,14 @@ all:
 	piqic ocaml --pp riak.proto.piqi
 	piqic ocaml --pp riak_kv.proto.piqi
 	piqic ocaml --pp riak_search.proto.piqi
-	ocamlfind ocamlc -package piqi.runtime -c riak_piqi.ml
-	ocamlfind ocamlc -package piqi.runtime -c riak_kv_piqi.ml
-	ocamlfind ocamlc -package piqi.runtime -c riak_search_piqi.ml
-	ocamlfind ocamlc -package Unix -package piqi.runtime Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo -c Riak.mli
-	ocamlfind ocamlc -package Unix -package piqi.runtime Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo -c Riak.ml
-	ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -linkpkg Riak_piqi.cmo Riak_kv_piqi.cmo riak_search_piqi.cmo Riak.cmo Test.ml
 
-#install:
-#	ocamlfind install Riak META Riak.cmi Riak.cmo Riak.mli 
+test:
+	ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime \
+		-linkpkg riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo riak.cmo Test.ml
+
+install:
+	ocamlfind install riak META riak.cmi riak.cmo riak.mli riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo \
+		riak.cmx riak_kv_piqi.cmx riak_piqi.cmx riak_search_piqi.cmx
 
 clean:
 	rm -f *.cmo
