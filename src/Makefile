@@ -1,12 +1,12 @@
 all: piqi nonnative test
-	echo "Build complete"
+	@echo "Build complete"
 
 nonnative:
 	ocamlfind ocamlc -a -package piqi.runtime riak_piqi.ml -o riak_piqi.cma
 	ocamlfind ocamlc -a -package piqi.runtime riak_kv_piqi.ml -o riak_kv_piqi.cma
 	ocamlfind ocamlc -a -package piqi.runtime riak_search_piqi.ml -o riak_search_piqi.cma
-	ocamlfind ocamlc -c -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma riak.mli
-	ocamlfind ocamlc -a -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma riak.ml -o riak.cma
+	ocamlfind ocamlc -c -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma Riak.mli -o Riak.cmi
+	ocamlfind ocamlc -a -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma Riak.ml -o Riak.cma
 
 native:
 	ocamlfind ocamlopt -package piqi.runtime -c riak_piqi.ml
@@ -31,13 +31,18 @@ piqi:
 
 test:
 	ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime \
-		-linkpkg riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo riak.cmo test.ml
-
+		-linkpkg riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma Riak.cma Test.ml
+	@echo "You should now have a RiakTests executable in the src directory."
+	@echo "To run the tests, export the following 2 variables to a running instance of Riak:"
+	@echo "RIAK_OCAML_TEST_IP"
+	@echo "RIAK_OCAML_TEST_PORT"
+	@echo "Then run the RiakTest program"
 install:
-	ocamlfind install riak META riak.cmi riak.cma riak.mli riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma
+	ocamlfind install riak META Riak.cmi Riak.cma Riak.mli riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma
 
 install-test:
-	ocamlfind ocamlc -package piqi.runtime -package Riak -package oUnit -package Unix test.ml -o RiakTests
+	ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg Test.ml
+
 
 clean:
 	rm -f *.cmo

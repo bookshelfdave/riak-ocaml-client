@@ -1,0 +1,8 @@
+version = "0.9"
+description = "Riak OCaml Client"
+requires = "unix"
+archive(byte) = "riak.cma"
+archive(byte, plugin) = "riak.cma"
+archive(native) = "riak.cmxa"
+archive(native, plugin) = "riak.cmxs"
+exists_if = "riak.cma"

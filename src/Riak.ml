@@ -104,6 +104,7 @@ type riak_search_query = string
 type riak_search_index = string
 type riak_node_id = string
 type riak_version = string
+type riak_vclock = string
 
 let get_mr_content_type ct =
   match ct with

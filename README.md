@@ -19,8 +19,15 @@ riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1.
 
 ```
 make 
-make install
+export RIAK_OCAML_TEST_IP="127.0.0.1"
+export RIAK_OCAML_TEST_PORT=8082
+make test
+  
+sudo make install
 ```
+  **Note**: Testing requires a running instance of Riak 1.2+. By default, it tries to connect to Riak on 127.0.0.1, port 8081. To override these values, simply export the following two environment variables:
+  RIAK_OCAML_TEST_IP
+  RIAK_OCAML_TEST_PORT
 
 ### Tutorial
 
@@ -50,27 +57,65 @@ handle_unix_error client ();;
 Compile this example with the following:
 
 ```
-   todo
+   	ocamlfind ocamlc -o foo -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg foo.ml
+
 ```
+**Note**: If compiling this example from the same directory as the Riak Ocaml Client source, you will see an error like this:
+`findlib: [WARNING] Interface Riak.cmi occurs in several directories: ., /usr/local/lib/ocaml/site-lib/riak`
 
 ### Development Guide
-
-**These docs are incomplete at the moment**
  
 #### A note on types
+
+Throughout the docs, you will find the following types. Almost all are strings:
+ 
+```
+type riak_bucket = string
+type riak_key = string
+type riak_client_id = string
+type riak_mr_query = string
+type riak_mr_content_type = Riak_MR_Json | Riak_MR_Erlang
+type riak_2i_name = string
+type riak_2i_range_min = string
+type riak_2i_range_max = string
+type riak_search_query = string
+type riak_search_index = string
+type riak_node_id = string
+type riak_version = string
+type riak_vclock = string
+```
+
+See ./src/Riak.mli for the complete interface.
  
 #### Connect/Disconnect
+
+```
+val riak_connection_defaults : riak_connection_options
+
+val riak_connect_with_defaults : string -> int -> riak_connection
+
+val riak_connect : string -> int -> riak_connection_options -> riak_connection
+
+val riak_disconnect : riak_connection -> unit
+
+```
+
 To connect using default connection properties: 
 
 ```
     let conn = riak_connect_with_defaults "127.0.0.1" 8081
 ```   
    
+  * **Note**: Pooling of connections isn't implemented, but feel free to roll your own.
+   
 #####Default connection properties:
+The following defaults are used when calling `riak_connect_with_defaults`.
 
 * disable Nagle's algorithm for better performance
 * try an operation 3 times before an exception is thrown
 * throw an exception if siblings are encountered    
+
+To override these values:
 
 ```
 	let options = { riak_connection_defaults with riak_conn_retries=5 } in
@@ -84,13 +129,53 @@ To disconnect:
 
 #### Ping
 
+```
+	val riak_ping : riak_connection -> bool
+```
+
+**Example**
+
+```
+	match riak_ping conn with
+    	| true -> ()
+    	| false -> assert_failure("Can't connect to Riak")
+```
+
 #### Client ID
+
+```
+val riak_get_client_id : riak_connection -> riak_client_id
+
+val riak_set_client_id : riak_connection -> riak_client_id -> unit
+```
+
+**Example**
+
+```
+	let test_client_id = "foo" in
+	let _ = riak_set_client_id conn test_client_id in
+	let client_id = riak_get_client_id conn in
+	...
+```
 
 #### Server Info
 
+```
+val riak_get_server_info : riak_connection -> riak_node_id * riak_version
+```
+
+**Example**
+
+```
+	let (node, version) = riak_get_server_info conn in
+```
+
 #### Get
 
-val **riak_get** : riak_connection -> string -> string -> riak_get_option list -> riak_object option
+```
+val riak_get :
+  riak_connection -> riak_bucket -> riak_key -> riak_get_option list -> riak_object option
+```
 
 **Example**	
 
@@ -98,8 +183,6 @@ val **riak_get** : riak_connection -> string -> string -> riak_get_option list -
 let result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_head true] in
 …
 ```
-
-
 
 **type riak_get_option =**
 
@@ -133,6 +216,24 @@ let result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_hea
  
 #### Put
 
+```
+val riak_put :
+  riak_connection ->
+  riak_bucket ->
+  riak_key option ->
+  string ->
+  riak_put_option list -> riak_vclock option -> riak_object list
+```
+
+**Example**
+
+```
+ let newkey = "foo" in
+ let newval = "bar" in
+ let existing_vclock = None
+ riak_put conn bucket (Some newkey) newval [Put_return_body true] existing_vclock
+```
+
 type riak_put_option =
 
 - **Put_w** of *riak_tunable_cap*
@@ -165,6 +266,18 @@ type riak_put_option =
 
 #### Delete
 
+```
+val riak_del :
+  riak_connection ->
+  riak_bucket ->
+  riak_key -> riak_del_option list -> unit
+```
+
+**Example**
+
+```
+	riak_del conn bucket "del_test" [] 
+```
 
 type riak_del_option =
 
@@ -211,17 +324,121 @@ type riak_del_option =
 
 #### List Buckets
 
+```
+val riak_list_buckets : riak_connection -> riak_bucket list
+```
+
+**Example**
+
+```
+ let buckets = riak_list_buckets conn in
+```
+
 #### List Keys
 
+```
+val riak_list_keys : riak_connection -> riak_bucket -> riak_key list
+```
+
+**Example**
+
+```
+ let keys = riak_list_keys conn "mybucket" in
+```
+
 #### Get Bucket Props (limited)
+At the moment, Riak Protobuffs only implement 2 bucket properties, 
+
+  * n_val
+  * allow_mult
+  
+  
+```
+val riak_get_bucket : riak_connection -> riak_bucket -> int32 option * bool option
+```
+
+**Example**
+
+```
+ let (n, multi) = riak_get_bucket conn bucket in
+      (match n with
+        | Some nval -> assert_bool "Valid bucket n value" (nval > 0l)
+        | None -> assert_failure "Unexpected default N value");
+      (match multi with
+        | Some multival -> assert_equal false multival
+        | None -> assert_failure "Unexpected default multi value")
+```
 
 #### Set Bucket Props (limited)
+At the moment, Riak Protobuffs only implement 2 bucket properties, 
+
+  * n_val
+  * allow_mult
+
+```
+val riak_set_bucket : riak_connection -> riak_bucket -> int32 option -> bool option -> unit
+```
+
+**Example**
+
+```
+  let n_val = 2l in
+  let allow_mult = (Some true) in
+  riak_set_bucket conn bucket n_val allow_mult
+```
 
 #### Map/Reduce
 
+```
+val riak_mapred :
+  riak_connection ->
+  riak_mr_query ->
+  riak_mr_content_type ->
+  (string option * int32 option) list
+
+```
+
+**Example**
+
+See src/test.ml for an example.
+
 #### Index Query
 
+Secondary index (2i) exact match query:
+
+```
+val riak_index_eq :
+  riak_connection ->
+  riak_bucket ->
+  riak_2i_name ->
+  riak_key option -> string list
+```
+
+Secondary index (2i) range query:
+
+```
+val riak_index_range :
+  riak_connection ->
+  riak_bucket ->
+  riak_2i_name ->
+  riak_2i_range_min option ->
+  riak_2i_range_max option -> string list
+```
+
 #### Riak Search
+
+Good luck. This probably needs a bit of work.
+
+```
+val riak_search_query :
+  riak_connection ->
+  string ->
+  string ->
+  riak_search_option list ->
+  (string * string option) list list *
+  Riak_search_piqi.Riak_search_piqi.float32 option *
+  Riak_search_piqi.Riak_search_piqi.uint32 option
+```
 
 
 type riak_search_option =
@@ -263,6 +480,7 @@ type riak_search_option =
 ###TODO
     * test search, index
     * better error handling
+    * get before put to prevent vclock explosion
 
 **© 2012 Dave Parfitt**
 

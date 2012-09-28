@@ -12,10 +12,22 @@ let testbucket() =
     let tb = ("testbucket_" ^ string_of_int(bucketnum)) in
       tb;;
 
+let test_ip() =
+  try
+    Sys.getenv("RIAK_OCAML_TEST_IP")
+  with Not_found ->
+    "127.0.0.1"
+
+let test_port() =
+  try
+    int_of_string(Sys.getenv("RIAK_OCAML_TEST_PORT"))
+  with Not_found ->
+    8081
+
 let open_riak_connection clientid =
   try
-    let ip = Sys.getenv("RIAK_IP") in
-    let port = int_of_string(Sys.getenv("RIAK_PORT")) in
+    let ip = test_ip() in
+    let port = test_port() in
     let conn = riak_connect_with_defaults ip port in
       riak_set_client_id conn clientid;
       conn
@@ -247,7 +259,9 @@ let test_case_mapreduce conn =
                           v = (Some "[[\"pizza data goes here\",1]]")) results)
 
 let test_case_with_connection _ =
-  let with_connection = riak_exec "127.0.0.1" 8081 in
+  let ip = test_ip() in
+  let port = test_port() in
+  let with_connection = riak_exec ip port in
   with_connection (fun conn -> riak_ping conn) |> ignore
 
 (* TODO: Index, Search *)

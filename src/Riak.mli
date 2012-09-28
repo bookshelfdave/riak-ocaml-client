@@ -108,6 +108,7 @@ type riak_search_query = string
 type riak_search_index = string
 type riak_node_id = string
 type riak_version = string
+type riak_vclock = string
 
 val get_mr_content_type : riak_mr_content_type -> string
 
@@ -142,7 +143,7 @@ val riak_put :
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> string option -> riak_object list
+  riak_put_option list -> riak_vclock option -> riak_object list
 
 val riak_del :
   riak_connection ->
