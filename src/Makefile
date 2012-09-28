@@ -1,19 +1,19 @@
-all: piqi nonnative native test
+all: piqi nonnative test
 	echo "Build complete"
 
 nonnative:
-	ocamlfind ocamlc -package piqi.runtime -c riak_piqi.ml
-	ocamlfind ocamlc -package piqi.runtime -c riak_kv_piqi.ml
-	ocamlfind ocamlc -package piqi.runtime -c riak_search_piqi.ml
-	ocamlfind ocamlc -package Unix -package piqi.runtime riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo -c riak.mli
-	ocamlfind ocamlc -package Unix -package piqi.runtime riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo -c riak.ml
+	ocamlfind ocamlc -a -package piqi.runtime riak_piqi.ml -o riak_piqi.cma
+	ocamlfind ocamlc -a -package piqi.runtime riak_kv_piqi.ml -o riak_kv_piqi.cma
+	ocamlfind ocamlc -a -package piqi.runtime riak_search_piqi.ml -o riak_search_piqi.cma
+	ocamlfind ocamlc -c -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma riak.mli
+	ocamlfind ocamlc -a -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma riak.ml -o riak.cma
 
 native:
 	ocamlfind ocamlopt -package piqi.runtime -c riak_piqi.ml
 	ocamlfind ocamlopt -package piqi.runtime -c riak_kv_piqi.ml
 	ocamlfind ocamlopt -package piqi.runtime -c riak_search_piqi.ml
-	ocamlfind ocamlopt -package Unix -package piqi.runtime Riak_piqi.cmx Riak_kv_piqi.cmx riak_search_piqi.cmx -c Riak.mli
-	ocamlfind ocamlopt -package Unix -package piqi.runtime Riak_piqi.cmx Riak_kv_piqi.cmx riak_search_piqi.cmx -c Riak.ml
+	ocamlfind ocamlopt -package Unix -package piqi.runtime riak_piqi.cmx riak_kv_piqi.cmx riak_search_piqi.cmx -c riak.mli
+	ocamlfind ocamlopt -package Unix -package piqi.runtime riak_piqi.cmx riak_kv_piqi.cmx riak_search_piqi.cmx -c riak.ml
 
 piqi:
 	piqi of-proto riak.proto
@@ -31,15 +31,20 @@ piqi:
 
 test:
 	ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime \
-		-linkpkg riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo riak.cmo Test.ml
+		-linkpkg riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo riak.cmo test.ml
 
 install:
-	ocamlfind install riak META riak.cmi riak.cmo riak.mli riak_piqi.cmo riak_kv_piqi.cmo riak_search_piqi.cmo \
-		riak.cmx riak_kv_piqi.cmx riak_piqi.cmx riak_search_piqi.cmx
+	ocamlfind install riak META riak.cmi riak.cma riak.mli riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma
+
+install-test:
+	ocamlfind ocamlc -package piqi.runtime -package Riak -package oUnit -package Unix test.ml -o RiakTests
 
 clean:
 	rm -f *.cmo
+	rm -f *.cma
 	rm -f *.cmi
+	rm -f *.cmx
+	rm -f *.o
 	rm -f *.proto.piqi
 	rm -f riak_kv_piqi.ml
 	rm -f riak_piqi.ml
