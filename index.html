@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Riak-ocaml-client : An OCaml client for Riak 1.2" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Riak-ocaml-client</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/metadave/riak-ocaml-client">View on GitHub</a>
+
+          <h1 id="project_title">Riak-ocaml-client</h1>
+          <h2 id="project_tagline">An OCaml client for Riak 1.2</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/metadave/riak-ocaml-client/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/metadave/riak-ocaml-client/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>riak-ocaml-client</h1>
+
+<p><strong>© 2012 Dave Parfitt</strong></p>
+
+<p>riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1. Future versions may support all HTTP operations.</p>
+
+<h2>Dependencies</h2>
+
+<ul>
+<li><a href="http://projects.camlcity.org/projects/findlib.html">ocamlfind</a></li>
+<li><a href="http://piqi.org/">Piqi</a></li>
+<li>
+<a href="Protobuffs">http://code.google.com/p/protobuf/</a>
+
+<ul>
+<li>On OSX, <code>brew install protobuf</code> if you are using Homebrew</li>
+</ul>
+</li>
+<li><a href="OUnit">http://ounit.forge.ocamlcore.org/</a></li>
+</ul><h2>Installation</h2>
+
+<pre><code>make 
+export RIAK_OCAML_TEST_IP="127.0.0.1"
+export RIAK_OCAML_TEST_PORT=8082
+make test
+
+sudo make install
+</code></pre>
+
+<p><strong>Note</strong>: Testing requires a running instance of Riak 1.2+. By default, it tries to connect to Riak on 127.0.0.1, port 8081. To override these values, simply export the following two environment variables:</p>
+
+<ul>
+<li>RIAK_OCAML_TEST_IP</li>
+<li>RIAK_OCAML_TEST_PORT</li>
+</ul><h2>Tutorial</h2>
+
+<h3>Hello world</h3>
+
+<p>The following program makes a connection to Riak and sends a ping message. </p>
+
+<pre><code>open Riak
+open Sys
+open Unix
+
+let client() =
+    let conn = riak_connect_with_defaults "127.0.0.1" 8087 in
+    let _ = match riak_ping conn with
+        | true  -&gt; print_endline("Pong")
+        | false -&gt; print_endline("Error")
+    in
+    riak_disconnect conn;
+    exit 0;;
+
+handle_unix_error client ();;
+
+</code></pre>
+
+<p>Compile this example with the following:</p>
+
+<pre><code>    ocamlfind ocamlc -o foo -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg foo.ml
+
+</code></pre>
+
+<p><strong>Note</strong>: Change the IP/port to the value defined in the Riak app.config <code>pb_port</code> and <code>pb_ip</code>.</p>
+
+<p><strong>Note</strong>: If compiling this example from the same directory as the Riak Ocaml Client source, you will see an error like this:
+<code>findlib: [WARNING] Interface Riak.cmi occurs in several directories: ., /usr/local/lib/ocaml/site-lib/riak</code></p>
+
+<h2>Development Guide</h2>
+
+<h3>A note on types</h3>
+
+<p>Throughout the docs, you will find the following types. Almost all are strings:</p>
+
+<pre><code>type riak_bucket = string
+type riak_key = string
+type riak_client_id = string
+type riak_mr_query = string
+type riak_mr_content_type = Riak_MR_Json | Riak_MR_Erlang
+type riak_2i_name = string
+type riak_2i_range_min = string
+type riak_2i_range_max = string
+type riak_search_query = string
+type riak_search_index = string
+type riak_node_id = string
+type riak_version = string
+type riak_vclock = string
+</code></pre>
+
+<p>See ./src/Riak.mli for the complete interface.</p>
+
+<h3>Connect/Disconnect</h3>
+
+<pre><code>val riak_connection_defaults : riak_connection_options
+
+val riak_connect_with_defaults : string -&gt; int -&gt; riak_connection
+
+val riak_connect : string -&gt; int -&gt; riak_connection_options -&gt; riak_connection
+
+val riak_disconnect : riak_connection -&gt; unit
+
+</code></pre>
+
+<p>To connect using default connection properties: </p>
+
+<pre><code>    let conn = riak_connect_with_defaults "127.0.0.1" 8081
+</code></pre>
+
+<ul>
+<li>
+<strong>Note</strong>: Pooling of connections isn't implemented, but feel free to roll your own.</li>
+</ul><h5>Default connection properties:</h5>
+
+<p>The following defaults are used when calling <code>riak_connect_with_defaults</code>.</p>
+
+<ul>
+<li>disable Nagle's algorithm for better performance</li>
+<li>try an operation 3 times before an exception is thrown</li>
+<li>throw an exception if siblings are encountered<br>
+</li>
+</ul><p>To override these values:</p>
+
+<pre><code>    let options = { riak_connection_defaults with riak_conn_retries=5 } in
+    let conn = riak_connect "127.0.0.1" 8081 options in
+    ...
+</code></pre>
+
+<p>To disconnect:    </p>
+
+<pre><code>riak_disconnect conn
+</code></pre>
+
+<h3>Ping</h3>
+
+<pre><code>    val riak_ping : riak_connection -&gt; bool
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code>    match riak_ping conn with
+        | true -&gt; ()
+        | false -&gt; assert_failure("Can't connect to Riak")
+</code></pre>
+
+<h3>Client ID</h3>
+
+<pre><code>val riak_get_client_id : riak_connection -&gt; riak_client_id
+
+val riak_set_client_id : riak_connection -&gt; riak_client_id -&gt; unit
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code>    let test_client_id = "foo" in
+    let _ = riak_set_client_id conn test_client_id in
+    let client_id = riak_get_client_id conn in
+    ...
+</code></pre>
+
+<h3>Server Info</h3>
+
+<pre><code>val riak_get_server_info : riak_connection -&gt; riak_node_id * riak_version
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code>    let (node, version) = riak_get_server_info conn in
+</code></pre>
+
+<h3>Get</h3>
+
+<pre><code>val riak_get :
+  riak_connection -&gt; riak_bucket -&gt; riak_key -&gt; riak_get_option list -&gt; riak_object option
+</code></pre>
+
+<p><strong>Example</strong> </p>
+
+<pre><code>let result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_head true] in
+…
+</code></pre>
+
+<p><strong>type riak_get_option =</strong></p>
+
+<ul>
+<li>
+<p><strong>Get_r</strong> of <em>riak_tunable_cap</em></p>
+
+<p>Read quorum. How many replicas need to agree when retrieving the object. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Get_pr</strong> of <em>riak_tunable_cap</em></p>
+
+<p>Primary read quorum. How many primary replicas need to be available when retrieving the object. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Get_basic_quorum</strong> of <em>bool</em></p>
+
+<p>Whether to return early in some failure cases (eg. when r=1 and you get 2 errors and a success basic_quorum=true would return an error). Default is defined per bucket.</p>
+</li>
+<li>
+<p><strong>Get_notfound_ok</strong> of <em>bool</em></p>
+
+<p>Whether to treat notfounds as successful reads for the purposes of R (default is defined per the bucket). Default is defined per bucket.</p>
+</li>
+<li>
+<p><strong>Get_if_modified</strong> of <em>string</em></p>
+
+<p>When a vclock is supplied as this option only return the object if the vclocks don't match</p>
+</li>
+<li>
+<p><strong>Get_head</strong> of <em>bool</em></p>
+
+<p>Return the object with the value(s) set as empty - allows you to get the metadata without a potentially large value</p>
+</li>
+<li>
+<p><strong>Get_deleted_vclock</strong> of <em>bool</em></p>
+
+<p>Return the tombstone's vclock, if applicable</p>
+</li>
+</ul><h3>Put</h3>
+
+<pre><code>val riak_put :
+  riak_connection -&gt;
+  riak_bucket -&gt;
+  riak_key option -&gt;
+  string -&gt;
+  riak_put_option list -&gt; riak_object list
+
+val riak_put_raw :
+  riak_connection -&gt;
+  riak_bucket -&gt;
+  riak_key option -&gt;
+  string -&gt;
+  riak_put_option list -&gt; riak_vclock option -&gt; riak_object list
+</code></pre>
+
+<p>If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if your key/value is new, use riak_put. riak_put will try and fetch the vclock before updating to limit sibling explosion</p>
+
+<p><strong>Example</strong></p>
+
+<pre><code> let newkey = "foo" in
+ let newval = "bar" in
+ riak_put conn bucket (Some newkey) newval [Put_return_body true]
+</code></pre>
+
+<pre><code> let newkey = "foo" in
+ let newval = "bar" in
+ let existing_vclock = (*Some vclock *)
+ riak_put_raw conn bucket (Some newkey) newval [Put_return_body true] existing_vclock
+</code></pre>
+
+<p>type riak_put_option =</p>
+
+<ul>
+<li>
+<p><strong>Put_w</strong> of <em>riak_tunable_cap</em></p>
+
+<p>Write quorum. How many replicas to write to before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Put_dw</strong> of <em>riak_tunable_cap</em></p>
+
+<p>How many replicas to commit to durable storage before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Put_return_body</strong> of <em>bool</em></p>
+
+<p>Whether to return the contents of the stored object. Defaults to false.</p>
+</li>
+<li>
+<p><strong>Put_pw</strong> of <em>riak_tunable_cap</em></p>
+
+<p>How many primary nodes must be up when the write is attempted. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Put_if_not_modified</strong> of <em>bool</em></p>
+
+<p>Update the value only if the vclock in the supplied object matches the one in the database.</p>
+</li>
+<li>
+<p><strong>Put_if_none_match</strong> of <em>bool</em></p>
+
+<p>Store the value only if this bucket/key combination are not already defined.</p>
+</li>
+<li>
+<p><strong>Put_return_head</strong> of <em>bool</em></p>
+
+<p>Like *return_body" except that the value(s) in the object are blank to avoid returning potentially large value(s).</p>
+</li>
+</ul><h3>Delete</h3>
+
+<pre><code>val riak_del :
+  riak_connection -&gt;
+  riak_bucket -&gt;
+  riak_key -&gt; riak_del_option list -&gt; unit
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code>    riak_del conn bucket "del_test" [] 
+</code></pre>
+
+<p>type riak_del_option =</p>
+
+<ul>
+<li>
+<p><strong>Del_rw</strong> of <em>riak_tunable_cap</em></p>
+
+<p>How many replicas to delete before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Del_vclock</strong> of <em>string</em></p>
+
+<p>Opaque vector clock provided by an earlier Get request. Use to prevent deleting of objects that have been modified since the last get request.</p>
+</li>
+<li>
+<p><strong>Del_r</strong> of <em>riak_tunable_cap</em></p>
+
+<p>Read quorum. How many replicas need to agree when retrieving the object. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Del_w</strong> of <em>riak_tunable_cap</em></p>
+
+<p>Write quorum. How many replicas to write to before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Del_pr</strong> of <em>riak_tunable_cap</em></p>
+
+<p>Primary read quorum. How many primary replicas need to be available when retrieving the object. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Del_pw</strong> of <em>riak_tunable_cap</em></p>
+
+<p>How many primary nodes must be up when the write is attempted. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+<li>
+<p><strong>Del_dw</strong> of <em>riak_tunable_cap</em></p>
+
+<p>How many replicas to commit to durable storage before returning a successful response. Default is defined per bucket. See the Tunable CAP Options section below.</p>
+</li>
+</ul><h3>Tunable CAP Options</h3>
+
+<p>type riak_tunable_cap =</p>
+
+<ul>
+<li><strong>Riak_value_one</strong></li>
+<li><strong>Riak_value_quorum</strong></li>
+<li><strong>Riak_value_all</strong></li>
+<li><strong>Riak_value_default</strong></li>
+<li><strong>Riak_value of Riak_kv_piqi.uint32</strong></li>
+</ul><h3>List Buckets</h3>
+
+<pre><code>val riak_list_buckets : riak_connection -&gt; riak_bucket list
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code> let buckets = riak_list_buckets conn in
+</code></pre>
+
+<h3>List Keys</h3>
+
+<pre><code>val riak_list_keys : riak_connection -&gt; riak_bucket -&gt; riak_key list
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code> let keys = riak_list_keys conn "mybucket" in
+</code></pre>
+
+<h3>Get Bucket Props (limited)</h3>
+
+<p>At the moment, Riak Protobuffs only implement 2 bucket properties, </p>
+
+<ul>
+<li>n_val</li>
+<li>allow_mult</li>
+</ul><pre><code>val riak_get_bucket : riak_connection -&gt; riak_bucket -&gt; int32 option * bool option
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code> let (n, multi) = riak_get_bucket conn bucket in
+      (match n with
+        | Some nval -&gt; assert_bool "Valid bucket n value" (nval &gt; 0l)
+        | None -&gt; assert_failure "Unexpected default N value");
+      (match multi with
+        | Some multival -&gt; assert_equal false multival
+        | None -&gt; assert_failure "Unexpected default multi value")
+</code></pre>
+
+<h3>Set Bucket Props (limited)</h3>
+
+<p>At the moment, Riak Protobuffs only implement 2 bucket properties, </p>
+
+<ul>
+<li>n_val</li>
+<li>allow_mult</li>
+</ul><pre><code>val riak_set_bucket : riak_connection -&gt; riak_bucket -&gt; int32 option -&gt; bool option -&gt; unit
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<pre><code>  let n_val = 2l in
+  let allow_mult = (Some true) in
+  riak_set_bucket conn bucket n_val allow_mult
+</code></pre>
+
+<h3>Map/Reduce</h3>
+
+<pre><code>val riak_mapred :
+  riak_connection -&gt;
+  riak_mr_query -&gt;
+  riak_mr_content_type -&gt;
+  (string option * int32 option) list
+
+</code></pre>
+
+<p><strong>Example</strong></p>
+
+<p>See src/test.ml for an example.</p>
+
+<h3>Index Query</h3>
+
+<p>Secondary index (2i) exact match query:</p>
+
+<pre><code>val riak_index_eq :
+  riak_connection -&gt;
+  riak_bucket -&gt;
+  riak_2i_name -&gt;
+  riak_key option -&gt; string list
+</code></pre>
+
+<p>Secondary index (2i) range query:</p>
+
+<pre><code>val riak_index_range :
+  riak_connection -&gt;
+  riak_bucket -&gt;
+  riak_2i_name -&gt;
+  riak_2i_range_min option -&gt;
+  riak_2i_range_max option -&gt; string list
+</code></pre>
+
+<h3>Riak Search</h3>
+
+<p>Good luck. This probably needs a little bit of cleanup. Please don't punch me Ryan.</p>
+
+<pre><code>val riak_search_query :
+  riak_connection -&gt;
+  string -&gt;
+  string -&gt;
+  riak_search_option list -&gt;
+  (string * string option) list list *
+  Riak_search_piqi.Riak_search_piqi.float32 option *
+  Riak_search_piqi.Riak_search_piqi.uint32 option
+</code></pre>
+
+<p>type riak_search_option =</p>
+
+<ul>
+<li>
+<p><strong>Search_rows</strong> of <em>Riak_kv_piqi.uint32</em></p>
+
+<p>Specify the maximum number of results to return. Default is 10.</p>
+</li>
+<li>
+<p><strong>Search_start</strong> of <em>Riak_kv_piqi.uint32</em></p>
+
+<p>Specify the starting result of the query. Useful for paging. Default is 0.</p>
+</li>
+<li>
+<p><strong>Search_sort</strong> of <em>string</em></p>
+
+<p>Sort on the specified field name. Default is “none”, which causes the results to be sorted in descending order by score.</p>
+</li>
+<li>
+<p><strong>Search_filter</strong> of <em>string</em></p>
+
+<p>Filters the search by an additional query scoped to inline fields.</p>
+</li>
+<li>
+<p><strong>Search_df</strong> of <em>string</em></p>
+
+<p>Use the provided field as the default. Overrides the “default_field” setting in the schema file.</p>
+</li>
+<li>
+<p><strong>Search_op</strong> of <em>string</em></p>
+
+<p>Allowed settings are either “and” or “or”. Overrides the “default_op” setting in the schema file. Default is “or”.</p>
+</li>
+<li>
+<p><strong>Search_fl</strong> of <em>string list</em></p>
+
+<p>Return fields limit (for ids only, generally).</p>
+</li>
+<li>
+<p><strong>Search_presort</strong> of <em>string</em></p>
+
+<p>Presort (key / score)</p>
+</li>
+</ul><hr><h2>Contributing</h2>
+
+<ul>
+<li>Please report all bugs and feature requests via Github Issues.</li>
+<li>Friendly pull requests accepted. </li>
+</ul><h2>TODO</h2>
+
+<pre><code>* test search, index
+* better error handling
+* Next version: support HTTP operations, or better yet, implement all HTTP ops as PB messages in Riak
+</code></pre>
+
+<p>** © 2012 Dave Parfitt **</p>
+
+<p>Portions of the documentation are ** © 2012 Basho Technologies **</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Riak-ocaml-client maintained by <a href="https://github.com/metadave">metadave</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
