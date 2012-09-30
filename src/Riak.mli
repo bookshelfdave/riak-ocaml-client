@@ -143,6 +143,13 @@ val riak_put :
   riak_bucket ->
   riak_key option ->
   string ->
+  riak_put_option list -> riak_object list
+
+val riak_put_raw :
+  riak_connection ->
+  riak_bucket ->
+  riak_key option ->
+  string ->
   riak_put_option list -> riak_vclock option -> riak_object list
 
 val riak_del :

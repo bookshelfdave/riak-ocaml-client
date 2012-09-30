@@ -195,12 +195,11 @@ let new_get_req bucket key =
     Riak_kv_piqi.Rpb_get_req.deletedvclock = None;
   }
 
-(* TODO clean up this record! *)
-let new_put_req bucket key value =
+let new_put_req bucket key value vclock =
   {
     Riak_kv_piqi.Rpb_put_req.bucket = bucket;
     Riak_kv_piqi.Rpb_put_req.key = key;
-    Riak_kv_piqi.Rpb_put_req.vclock = None;
+    Riak_kv_piqi.Rpb_put_req.vclock = vclock;
     Riak_kv_piqi.Rpb_put_req.content = (new_content value);
     Riak_kv_piqi.Rpb_put_req.w =
       Some (get_riak_tunable_cap Riak_value_default);
@@ -429,33 +428,6 @@ let riak_connection_defaults =
     riak_conn_resolve_conflicts = default_resolver;
   }
 
-let riak_connect hostname portnum options =
-  let server_addr =
-    try (gethostbyname hostname).h_addr_list.(0)
-    with Not_found ->
-      prerr_endline (hostname ^ ": Host not found");
-      exit 2 in
-  let riaksocket = socket PF_INET SOCK_STREAM 0 in
-    set_nagle riaksocket options.riak_conn_use_nagal;
-    connect riaksocket (ADDR_INET(server_addr, portnum));
-    let cout = out_channel_of_descr riaksocket in
-    let cin  = in_channel_of_descr riaksocket in
-      { host=hostname;
-        port=portnum;
-        sock=riaksocket;
-        inc=cin;
-        outc=cout;
-        debug=false;
-        clientid=None;
-        conn_options=options;
-      }
-
-let riak_connect_with_defaults hostname portnum =
-  riak_connect hostname portnum riak_connection_defaults
-
-let riak_disconnect (conn:riak_connection) =
-  close conn.sock
-
 let send_msg (conn:riak_connection) (req:Piqirun.OBuf.t option) (reqid:int) =
   let reqlen = match req with
     | Some req -> (String.length (Piqirun.OBuf.to_string(req))) + 1
@@ -523,13 +495,6 @@ let rec try_many fn n last_exception =
 let riak_multi conn fn =
   try_many fn conn.conn_options.riak_conn_retries None
 
-let riak_ping conn =
-  let impl() =
-    let _ = send_pb_message conn None rpbPingReq rpbPingResp in
-      true
-  in
-    riak_multi conn impl
-
 let riak_get_client_id conn =
   let impl() =
     let pbresp = send_pb_message conn None rpbGetClientIdReq rpbGetClientIdResp in
@@ -546,6 +511,44 @@ let riak_set_client_id conn newid =
       ()
   in
     riak_multi conn impl
+
+let riak_connect hostname portnum options =
+  let server_addr =
+    try (gethostbyname hostname).h_addr_list.(0)
+    with Not_found ->
+      prerr_endline (hostname ^ ": Host not found");
+      exit 2 in
+  let riaksocket = socket PF_INET SOCK_STREAM 0 in
+    set_nagle riaksocket options.riak_conn_use_nagal;
+    connect riaksocket (ADDR_INET(server_addr, portnum));
+    let cout = out_channel_of_descr riaksocket in
+    let cin  = in_channel_of_descr riaksocket in
+    let conn =  {
+      host=hostname;
+      port=portnum;
+      sock=riaksocket;
+      inc=cin;
+      outc=cout;
+      debug=false;
+      clientid=None;
+      conn_options=options;
+    } in
+      conn
+
+let riak_connect_with_defaults hostname portnum =
+  riak_connect hostname portnum riak_connection_defaults
+
+let riak_disconnect (conn:riak_connection) =
+  close conn.sock
+
+
+let riak_ping conn =
+  let impl() =
+    let _ = send_pb_message conn None rpbPingReq rpbPingResp in
+      true
+  in
+    riak_multi conn impl
+
 
 let riak_get_server_info conn =
   let impl() =
@@ -585,9 +588,35 @@ let riak_get (conn:riak_connection) bucket key options =
   in
     riak_multi conn impl
 
-let riak_put (conn:riak_connection) bucket key value options vclock =
+
+let get_vclock_for_put conn bucket key =
   let impl() =
-    let putreq = process_put_options options (new_put_req bucket key value) in
+    match riak_get conn bucket key [] with
+      | None -> None
+      | Some value -> value.obj_vclock
+  in
+    riak_multi conn impl
+
+let riak_put (conn:riak_connection) bucket key value options =
+  let vclock = match key with
+                | None -> None
+                | Some keyval -> get_vclock_for_put conn bucket keyval in
+  let impl() =
+    let pr = new_put_req bucket key value vclock in
+    let putreq = process_put_options options pr in
+    let genreq = Riak_kv_piqi.gen_rpb_put_req putreq in
+    let pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
+    let resp = Riak_kv_piqi.parse_rpb_put_resp pbresp in
+    let v = resp.Riak_kv_piqi.Rpb_put_resp.content in
+    let newvclock = resp.Riak_kv_piqi.Rpb_put_resp.vclock in
+      List.map (riak_process_content bucket key newvclock) v
+  in
+  riak_multi conn impl
+
+let riak_put_raw (conn:riak_connection) bucket key value options vclock =
+  let impl() =
+    let pr = new_put_req bucket key value None in
+    let putreq = process_put_options options pr in
     let genreq = Riak_kv_piqi.gen_rpb_put_req putreq in
     let pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
     let resp = Riak_kv_piqi.parse_rpb_put_resp pbresp in

@@ -69,7 +69,7 @@ let show_option v =
     | None -> print_endline "NONE"
     | Some x -> print_endline x
 
-let test_case_put conn =
+let test_case_put_raw conn =
   let bucket = testbucket() in
   let rec putmany n =
     match n with
@@ -78,7 +78,7 @@ let test_case_put conn =
           let newkey = "foo" ^ string_of_int(n) in
           let newval = "bar" ^ string_of_int(n) in
           let objs =
-            riak_put conn bucket (Some newkey)
+            riak_put_raw conn bucket (Some newkey)
               newval [Put_return_body true] None in
           let testval os =
             match os with
@@ -113,11 +113,55 @@ let test_case_put conn =
     sleep(5);
     getmany 1000;;
 
+let test_case_put conn =
+  let bucket = testbucket() in
+  let rec putmany n =
+    match n with
+      | 0 -> ()
+      | n ->
+          let newkey = "foo" ^ string_of_int(n) in
+          let newval = "bar" ^ string_of_int(n) in
+          let objs =
+            riak_put conn bucket (Some newkey) newval [Put_return_body true] in
+          let testval os =
+            match os with
+              | [] -> assert_failure "No objects returned from put"
+              | o :: [] ->
+                  (match o.obj_vclock with
+                    | Some v -> assert_bool "Invalid vclock" (v <> "")
+                    | None -> assert_failure
+                          "Put with return_body didn't return any data")
+              | o :: tl -> assert_failure "Put returned sublings"
+          in
+            testval objs;
+            putmany (n-1)
+  in
+  let rec getmany n =
+    match n with
+      | 0 -> ()
+      | n ->
+          let getkey = "foo" ^ string_of_int(n) in
+          let getval = "bar" ^ string_of_int(n) in
+          let obj = riak_get conn bucket getkey [] in
+            match obj with
+              | Some o ->
+                  (match o.obj_value with
+                     | Some v ->
+                         assert_equal v getval;
+                         getmany (n-1)
+                     | None -> assert_failure "Invalid value at key")
+              | None -> assert_failure "Object not found"
+  in
+    putmany 1000;
+    sleep(5);
+    getmany 1000;;
+
+
 let test_case_get conn =
   let bucket = testbucket() in
   let gt = "get_test" in
   let tv = "test_value" in
-    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    riak_put_raw conn bucket (Some gt) tv [] None |> ignore;
     let result = riak_get conn bucket gt [] in
       match result with
         | None -> assert_failure "Get value not found"
@@ -133,8 +177,8 @@ let test_case_get_with_siblings _ =
   let gst = "get_sibling_test" in
     riak_set_bucket conn0 bucket None (Some true);
     sleep(1);
-    riak_put conn0 bucket (Some gst) "test_sibling_value_1" [] None |> ignore;
-    riak_put conn1 bucket (Some gst) "test_sibling_value_2" [] None |> ignore;
+    riak_put_raw conn0 bucket (Some gst) "test_sibling_value_1" [] None |> ignore;
+    riak_put_raw conn1 bucket (Some gst) "test_sibling_value_2" [] None |> ignore;
     (* make sure the default resolver throws exception when 
      * siblings are found *)
     try
@@ -148,7 +192,7 @@ let test_case_del conn =
   let bucket = testbucket() in
   let gt = "del_test" in
   let tv = "test_value" in
-    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    riak_put_raw conn bucket (Some gt) tv [] None |> ignore;
     sleep(3);
     riak_del conn bucket "del_test" [] |> ignore;
     match riak_get conn bucket gt [] with
@@ -159,7 +203,7 @@ let test_case_list_buckets conn =
   let bucket = testbucket() in
   let gt = "bucket_test" in
   let tv = "test_value" in
-    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    riak_put_raw conn bucket (Some gt) tv [] None |> ignore;
     sleep(1);
     let buckets = riak_list_buckets conn in
       assert_bool "Buckets length > 0" (List.length buckets > 0);
@@ -173,7 +217,7 @@ let test_case_list_keys conn =
       | 0 -> ()
       | n -> (let tk = "bucket_test" ^ string_of_int(n) in
               let tv = "test_value" in
-                riak_put conn bucket (Some tk) tv [] None |> ignore;
+                riak_put_raw conn bucket (Some tk) tv [] None |> ignore;
                 put_many (n-1))
   in
     put_many 66;
@@ -186,7 +230,7 @@ let test_case_get_bucket conn =
   let bucket = testbucket() in
   let gt = "bucket_test" in
   let tv = "test_value" in
-    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    riak_put_raw conn bucket (Some gt) tv [] None |> ignore;
     sleep(1);
     let (n, multi) = riak_get_bucket conn bucket in
       (match n with
@@ -200,7 +244,7 @@ let test_case_set_bucket conn =
   let bucket = testbucket() in
   let gt = "bucket_test" in
   let tv = "test_value" in
-    riak_put conn bucket (Some gt) tv [] None |> ignore;
+    riak_put_raw conn bucket (Some gt) tv [] None |> ignore;
     sleep(1);
     riak_set_bucket conn bucket (Some 2l) (Some true);
     sleep(1);
@@ -231,13 +275,13 @@ let show_int_option v =
 
 let test_case_mapreduce conn =
   let bucket = testbucket() in
-    riak_put conn bucket (Some "foo")
+    riak_put_raw conn bucket (Some "foo")
       "pizza data goes here" [] None |> ignore;
-    riak_put conn bucket (Some "bar")
+    riak_put_raw conn bucket (Some "bar")
       "pizza pizza pizza pizza" [] None |> ignore;
-    riak_put conn bucket (Some "baz")
+    riak_put_raw conn bucket (Some "baz")
       "nothing to see here" [] None |> ignore;
-    riak_put conn bucket (Some "bam")
+    riak_put_raw conn bucket (Some "bam")
       "pizza pizza pizza" [] None |> ignore;
     sleep(1);
     let query = "{\"inputs\":\"" ^ bucket ^ "\", \"query\":[{\"map\":{\"language\":\"javascript\", " ^
@@ -282,6 +326,7 @@ let suite = "Riak" >:::
   "test_case_client_id" >:: (bracket setup test_case_client_id teardown);
   "test_case_server_info" >:: (bracket setup test_case_server_info teardown);
   "test_case_put" >:: (bracket setup test_case_put teardown);
+  "test_case_put_raw" >:: (bracket setup test_case_put_raw teardown);
   "test_case_get" >:: (bracket setup test_case_get teardown);
   "test_case_get_with_siblings" >:: (bracket setup test_case_get_with_siblings teardown);
   "test_case_del" >:: (bracket setup test_case_del teardown);
