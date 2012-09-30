@@ -18,11 +18,13 @@ Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 ## Installation
 
 ```
+cd src
 make 
+# To test, run this:
 export RIAK_OCAML_TEST_IP="127.0.0.1"
 export RIAK_OCAML_TEST_PORT=8087
-make test
-  
+./RiakTests
+
 sudo make install
 ```
   **Note**: Testing requires a running instance of Riak 1.2+. By default, it tries to connect to Riak on 127.0.0.1, port 8081. To override these values, simply export the following two environment variables:
@@ -517,7 +519,7 @@ type riak_search_option =
 ## Contributing
 
 * Please report all bugs and feature requests via Github Issues.
-* Friendly pull requests accepted. 
+* Friendly pull requests accepted. Please create a new branch for your features (checkout -b my_branch).
 
 ##TODO
     * test search, index
