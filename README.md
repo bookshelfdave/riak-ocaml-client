@@ -5,10 +5,12 @@ riak-ocaml-client
 
 riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1. Future versions may support all HTTP operations.
 
+Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
+
 ##Dependencies
 
 * [ocamlfind](http://projects.camlcity.org/projects/findlib.html)
-* [Piqi](http://piqi.org/)
+* [Piqi](http://piqi.org/) 
 * [http://code.google.com/p/protobuf/](Protobuffs)
    * On OSX, `brew install protobuf` if you are using Homebrew
 * [http://ounit.forge.ocamlcore.org/](OUnit)
@@ -56,7 +58,8 @@ handle_unix_error client ();;
 Compile this example with the following:
 
 ```
-   	ocamlfind ocamlc -o foo -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg foo.ml
+   	ocamlfind ocamlc -o foo -package Unix -package oUnit -package \
+   	    piqi.runtime -package riak -linkpkg foo.ml
 
 ```
 
@@ -120,7 +123,8 @@ The following defaults are used when calling `riak_connect_with_defaults`.
 To override these values:
 
 ```
-	let options = { riak_connection_defaults with riak_conn_retries=5 } in
+	let options = 
+	    { riak_connection_defaults with riak_conn_retries=5 } in
 	let conn = riak_connect "127.0.0.1" 8081 options in
 	...
 ```
@@ -176,7 +180,11 @@ val riak_get_server_info : riak_connection -> riak_node_id * riak_version
 
 ```
 val riak_get :
-  riak_connection -> riak_bucket -> riak_key -> riak_get_option list -> riak_object option
+  riak_connection -> 
+  riak_bucket -> 
+  riak_key -> 
+  riak_get_option list -> 
+  riak_object option
 ```
 
 **Example**	
@@ -224,14 +232,17 @@ val riak_put :
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> riak_object list
+  riak_put_option list -> 
+  riak_object list
 
 val riak_put_raw :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> riak_vclock option -> riak_object list
+  riak_put_option list -> 
+  riak_vclock option -> 
+  riak_object list
 ```
 If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if your key/value is new, use riak_put. riak_put will try and fetch the vclock before updating to limit sibling explosion
 
@@ -372,7 +383,10 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
   
   
 ```
-val riak_get_bucket : riak_connection -> riak_bucket -> int32 option * bool option
+val riak_get_bucket : 
+	riak_connection -> 
+	riak_bucket -> 
+	int32 option * bool option
 ```
 
 **Example**
@@ -394,7 +408,12 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
   * allow_mult
 
 ```
-val riak_set_bucket : riak_connection -> riak_bucket -> int32 option -> bool option -> unit
+val riak_set_bucket : 
+    riak_connection -> 
+    riak_bucket -> 
+    int32 option -> 
+    bool option -> 
+    unit
 ```
 
 **Example**
