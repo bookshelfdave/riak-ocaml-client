@@ -8,12 +8,16 @@ nonnative:
 	ocamlfind ocamlc -c -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma Riak.mli -o Riak.cmi
 	ocamlfind ocamlc -a -package Unix -package piqi.runtime riak_piqi.cma riak_kv_piqi.cma riak_search_piqi.cma Riak.ml -o Riak.cma
 
-native:
-	ocamlfind ocamlopt -package piqi.runtime -c riak_piqi.ml
-	ocamlfind ocamlopt -package piqi.runtime -c riak_kv_piqi.ml
-	ocamlfind ocamlopt -package piqi.runtime -c riak_search_piqi.ml
-	ocamlfind ocamlopt -package Unix -package piqi.runtime riak_piqi.cmx riak_kv_piqi.cmx riak_search_piqi.cmx -c riak.mli
-	ocamlfind ocamlopt -package Unix -package piqi.runtime riak_piqi.cmx riak_kv_piqi.cmx riak_search_piqi.cmx -c riak.ml
+# Hey, sorry. Native doesn't compile right now. I don't feel like messing with the OCaml build system right
+# now. Please send me a pull request to fix this if you end up using native. Cheers, Dave.
+#native:
+#	ocamlfind ocamlopt -a -package piqi.runtime riak_piqi.ml -o riak_piqi.cmxa
+#	ocamlfind ocamlopt -a -package piqi.runtime riak_kv_piqi.ml -o riak_kv_piqi.cmxa
+#	ocamlfind ocamlopt -a -package piqi.runtime riak_search_piqi.ml -o riak_search_piqi.cmxa
+#	ocamlfind ocamlopt -c -package Unix -package piqi.runtime riak_piqi.cmxa riak_kv_piqi.cmxa riak_search_piqi.cmxa Riak.mli -o Riak.cmi
+#	ocamlfind ocamlopt -a -package Unix -package piqi.runtime riak_piqi.cmxa riak_kv_piqi.cmxa riak_search_piqi.cmxa Riak.ml -o Riak.cmxa
+
+#ocamlfind ocamlopt -package Unix -package piqi.runtime riak_piqi.cmx riak_kv_piqi.cmx riak_search_piqi.cmx -c riak.ml
 
 piqi:
 	piqi of-proto riak.proto
