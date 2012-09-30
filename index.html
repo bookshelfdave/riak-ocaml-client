@@ -1,36 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Riak-ocaml-client : An OCaml client for Riak 1.2" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Riak-ocaml-client by metadave</title>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Riak-ocaml-client</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
   </head>
-
   <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Riak-ocaml-client</h1>
+        <p class="header">An OCaml client for Riak 1.2</p>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/metadave/riak-ocaml-client">View on GitHub</a>
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/metadave/riak-ocaml-client/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/metadave/riak-ocaml-client/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/metadave/riak-ocaml-client">View On GitHub</a></li>
+        </ul>
 
-          <h1 id="project_title">Riak-ocaml-client</h1>
-          <h2 id="project_tagline">An OCaml client for Riak 1.2</h2>
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/metadave">metadave</a></p>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/metadave/riak-ocaml-client/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/metadave/riak-ocaml-client/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
+      </header>
+      <section>
         <h1>riak-ocaml-client</h1>
 
 <p><strong>© 2012 Dave Parfitt</strong></p>
@@ -41,7 +40,8 @@
 
 <ul>
 <li><a href="http://projects.camlcity.org/projects/findlib.html">ocamlfind</a></li>
-<li><a href="http://piqi.org/">Piqi</a></li>
+<li>
+<a href="http://piqi.org/">Piqi</a> </li>
 <li>
 <a href="Protobuffs">http://code.google.com/p/protobuf/</a>
 
@@ -90,7 +90,8 @@ handle_unix_error client ();;
 
 <p>Compile this example with the following:</p>
 
-<pre><code>    ocamlfind ocamlc -o foo -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg foo.ml
+<pre><code>    ocamlfind ocamlc -o foo -package Unix -package oUnit -package \
+        piqi.runtime -package riak -linkpkg foo.ml
 
 </code></pre>
 
@@ -153,7 +154,8 @@ val riak_disconnect : riak_connection -&gt; unit
 </li>
 </ul><p>To override these values:</p>
 
-<pre><code>    let options = { riak_connection_defaults with riak_conn_retries=5 } in
+<pre><code>    let options = 
+        { riak_connection_defaults with riak_conn_retries=5 } in
     let conn = riak_connect "127.0.0.1" 8081 options in
     ...
 </code></pre>
@@ -203,7 +205,11 @@ val riak_set_client_id : riak_connection -&gt; riak_client_id -&gt; unit
 <h3>Get</h3>
 
 <pre><code>val riak_get :
-  riak_connection -&gt; riak_bucket -&gt; riak_key -&gt; riak_get_option list -&gt; riak_object option
+  riak_connection -&gt; 
+  riak_bucket -&gt; 
+  riak_key -&gt; 
+  riak_get_option list -&gt; 
+  riak_object option
 </code></pre>
 
 <p><strong>Example</strong> </p>
@@ -257,14 +263,17 @@ val riak_set_client_id : riak_connection -&gt; riak_client_id -&gt; unit
   riak_bucket -&gt;
   riak_key option -&gt;
   string -&gt;
-  riak_put_option list -&gt; riak_object list
+  riak_put_option list -&gt; 
+  riak_object list
 
 val riak_put_raw :
   riak_connection -&gt;
   riak_bucket -&gt;
   riak_key option -&gt;
   string -&gt;
-  riak_put_option list -&gt; riak_vclock option -&gt; riak_object list
+  riak_put_option list -&gt; 
+  riak_vclock option -&gt; 
+  riak_object list
 </code></pre>
 
 <p>If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if your key/value is new, use riak_put. riak_put will try and fetch the vclock before updating to limit sibling explosion</p>
@@ -408,7 +417,10 @@ val riak_put_raw :
 <ul>
 <li>n_val</li>
 <li>allow_mult</li>
-</ul><pre><code>val riak_get_bucket : riak_connection -&gt; riak_bucket -&gt; int32 option * bool option
+</ul><pre><code>val riak_get_bucket : 
+    riak_connection -&gt; 
+    riak_bucket -&gt; 
+    int32 option * bool option
 </code></pre>
 
 <p><strong>Example</strong></p>
@@ -429,7 +441,12 @@ val riak_put_raw :
 <ul>
 <li>n_val</li>
 <li>allow_mult</li>
-</ul><pre><code>val riak_set_bucket : riak_connection -&gt; riak_bucket -&gt; int32 option -&gt; bool option -&gt; unit
+</ul><pre><code>val riak_set_bucket : 
+    riak_connection -&gt; 
+    riak_bucket -&gt; 
+    int32 option -&gt; 
+    bool option -&gt; 
+    unit
 </code></pre>
 
 <p><strong>Example</strong></p>
@@ -547,17 +564,11 @@ val riak_put_raw :
 
 <p>Portions of the documentation are ** © 2012 Basho Technologies **</p>
       </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Riak-ocaml-client maintained by <a href="https://github.com/metadave">metadave</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
       </footer>
     </div>
-
-    
-
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
   </body>
 </html>
