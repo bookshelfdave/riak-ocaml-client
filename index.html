@@ -52,10 +52,12 @@
 <li><a href="OUnit">http://ounit.forge.ocamlcore.org/</a></li>
 </ul><h2>Installation</h2>
 
-<pre><code>make 
+<pre><code>cd src
+make 
+# To test, run this:
 export RIAK_OCAML_TEST_IP="127.0.0.1"
 export RIAK_OCAML_TEST_PORT=8087
-make test
+./RiakTests
 
 sudo make install
 </code></pre>
@@ -552,7 +554,7 @@ val riak_put_raw :
 
 <ul>
 <li>Please report all bugs and feature requests via Github Issues.</li>
-<li>Friendly pull requests accepted. </li>
+<li>Friendly pull requests accepted. Please create a new branch for your features (checkout -b my_branch).</li>
 </ul><h2>TODO</h2>
 
 <pre><code>* test search, index
