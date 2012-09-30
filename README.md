@@ -20,7 +20,7 @@ Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 ```
 make 
 export RIAK_OCAML_TEST_IP="127.0.0.1"
-export RIAK_OCAML_TEST_PORT=8082
+export RIAK_OCAML_TEST_PORT=8087
 make test
   
 sudo make install
