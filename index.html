@@ -52,14 +52,15 @@
 <li><a href="OUnit">http://ounit.forge.ocamlcore.org/</a></li>
 </ul><h2>Installation</h2>
 
-<pre><code>cd src
+<pre><code>./configure
 make 
+make install
+
 # To test, run this:
+./configure --enable-tests
 export RIAK_OCAML_TEST_IP="127.0.0.1"
 export RIAK_OCAML_TEST_PORT=8087
-./RiakTests
-
-sudo make install
+make test
 </code></pre>
 
 <p><strong>Note</strong>: Testing requires a running instance of Riak 1.2+. By default, it tries to connect to Riak on 127.0.0.1, port 8081. To override these values, simply export the following two environment variables:</p>
@@ -562,9 +563,9 @@ val riak_put_raw :
 * Next version: support HTTP operations, or better yet, implement all HTTP ops as PB messages in Riak
 </code></pre>
 
-<p>** © 2012 Dave Parfitt **</p>
+<p><strong>© 2012 Dave Parfitt</strong></p>
 
-<p>Portions of the documentation are ** © 2012 Basho Technologies **</p>
+<p>Portions of the documentation are <strong>© 2012 Basho Technologies</strong></p>
       </section>
       <footer>
         <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
