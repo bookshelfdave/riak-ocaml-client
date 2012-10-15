@@ -1,0 +1,26 @@
+OASISFormat: 0.3
+Name:        riak
+Version:     0.9
+Synopsis:    Riak OCaml Client
+Authors:     Dave Parfitt
+License:     Apache-2.0
+Plugins:     META (0.3), DevFiles (0.3)
+PreBuildCommand: make -C src piqi
+
+Library riak
+  Path:       src
+  BuildTools: ocamlbuild
+  Modules:    Riak
+  BuildDepends: unix, piqi.runtime
+
+Executable test
+  Path:         test
+  BuildTools:   ocamlbuild
+  MainIs:       test.ml
+  BuildDepends: unix, piqi.runtime, oUnit, riak
+  Install:      false
+  Build$:       flag(tests)
+
+Test main
+  Run$:    flag(tests)
+  Command: $test
