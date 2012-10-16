@@ -10,14 +10,14 @@ PreBuildCommand: make -C src piqi
 Library riak
   Path:       src
   BuildTools: ocamlbuild
-  Modules:    Riak
-  BuildDepends: unix, piqi.runtime
+  Modules:    Riak, Riak_piqi, Riak_kv_piqi, Riak_search_piqi
+  BuildDepends: lwt, lwt.unix, lwt.syntax, piqi.runtime
 
 Executable test
   Path:         test
   BuildTools:   ocamlbuild
   MainIs:       test.ml
-  BuildDepends: unix, piqi.runtime, oUnit, riak
+  BuildDepends: lwt, lwt.unix, lwt.syntax, piqi.runtime, oUnit, riak
   Install:      false
   Build$:       flag(tests)
 

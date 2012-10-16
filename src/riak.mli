@@ -88,9 +88,9 @@ type riak_connection_options = {
 type riak_connection = {
   host : string;
   port : int;
-  sock : Unix.file_descr;
-  inc : in_channel;
-  outc : out_channel;
+  sock : Lwt_unix.file_descr;
+  inc : Lwt_io.input_channel;
+  outc : Lwt_io.output_channel;
   debug : bool;
   clientid : string option;
   conn_options : riak_connection_options;
@@ -116,95 +116,86 @@ val riak_ocaml_client_version : string
 
 val riak_connection_defaults : riak_connection_options
 
-val riak_connect_with_defaults : string -> int -> riak_connection
+val riak_connect_with_defaults : string -> int -> riak_connection Lwt.t
 
-val riak_connect : string -> int -> riak_connection_options -> riak_connection
+val riak_connect : string -> int -> riak_connection_options -> riak_connection Lwt.t
 
-val riak_disconnect : riak_connection -> unit
+val riak_disconnect : riak_connection -> unit Lwt.t
 
-val riak_ping : riak_connection -> bool
+val riak_ping : riak_connection -> bool Lwt.t
 
-val riak_get_client_id : riak_connection -> riak_client_id
+val riak_get_client_id : riak_connection -> riak_client_id Lwt.t
 
-val riak_set_client_id : riak_connection -> riak_client_id -> unit
+val riak_set_client_id : riak_connection -> riak_client_id -> unit Lwt.t
 
 val riak_get_server_info :
-  riak_connection -> riak_node_id * riak_version
+  riak_connection -> (riak_node_id * riak_version) Lwt.t
 
 val print_riak_obj : riak_object -> unit
 
 val riak_get :
   riak_connection ->
   riak_bucket ->
-  riak_key -> riak_get_option list -> riak_object option
+  riak_key -> riak_get_option list -> riak_object option Lwt.t
 
 val riak_put :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> riak_object list
+  riak_put_option list -> riak_object list Lwt.t
 
 val riak_put_raw :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> riak_vclock option -> riak_object list
+  riak_put_option list -> riak_vclock option -> riak_object list Lwt.t
 
 val riak_del :
   riak_connection ->
   riak_bucket ->
-  riak_key -> riak_del_option list -> unit
+  riak_key -> riak_del_option list -> unit Lwt.t
 
-val riak_list_buckets : riak_connection -> riak_bucket list
+val riak_list_buckets : riak_connection -> riak_bucket list Lwt.t
 
 val riak_list_keys :
-  riak_connection -> riak_bucket -> riak_key list
+  riak_connection -> riak_bucket -> riak_key list Lwt.t
 
 val riak_get_bucket :
   riak_connection ->
-  riak_bucket -> int32 option * bool option
+  riak_bucket -> (int32 option * bool option) Lwt.t
 
 
 val riak_set_bucket :
-  riak_connection -> riak_bucket -> int32 option -> bool option -> unit
+  riak_connection -> riak_bucket -> int32 option -> bool option -> unit Lwt.t
 
 val riak_mapred :
   riak_connection ->
   riak_mr_query ->
   riak_mr_content_type ->
-  (string option * int32 option) list
+  (string option * int32 option) list Lwt.t
 
 val riak_index_eq :
   riak_connection ->
   riak_bucket ->
   riak_2i_name ->
-  riak_key option -> string list
+  riak_key option -> string list Lwt.t
 
 val riak_index_range :
   riak_connection ->
   riak_bucket ->
   riak_2i_name ->
   riak_2i_range_min option ->
-  riak_2i_range_max option -> string list
+  riak_2i_range_max option -> string list Lwt.t
 
-                                (*
-val riak_search_query :
-  riak_connection ->
-  riak_search_query ->
-  riak_search_index ->
-  riak_search_option list ->
-  'a list * float option * int32 option
-                                 *)
 val riak_search_query :
   riak_connection ->
   string ->
   string ->
   riak_search_option list ->
-  (string * string option) list list *
+  ((string * string option) list list *
   Riak_search_piqi.Riak_search_piqi.float32 option *
-  Riak_search_piqi.Riak_search_piqi.uint32 option
+  Riak_search_piqi.Riak_search_piqi.uint32 option) Lwt.t
 
-val riak_exec : string -> int -> (riak_connection -> 'a) -> 'a
-
+val riak_exec : string -> int -> (riak_connection -> 'a Lwt.t) -> 'a Lwt.t
