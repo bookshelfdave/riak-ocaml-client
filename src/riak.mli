@@ -71,11 +71,18 @@ type riak_search_option =
 exception RiakException of string * Riak_piqi.uint32
 exception RiakSiblingException of string
 
+type riak_link = {
+  mutable bucket : string option;
+  mutable key : string option;
+  mutable tag : string option
+}
+
 type riak_object = {
   obj_value : string option;
   obj_vclock : string option;
   obj_bucket : string;
   obj_key : string option;
+  obj_links : riak_link list;
   obj_exists : bool;
 }
 
@@ -142,6 +149,7 @@ val riak_put :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
+  ?links:riak_link list ->
   string ->
   riak_put_option list -> riak_object option Lwt.t
 
@@ -149,6 +157,7 @@ val riak_put_raw :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
+  ?links:riak_link list ->
   string ->
   riak_put_option list -> riak_vclock option -> riak_object option Lwt.t
 
