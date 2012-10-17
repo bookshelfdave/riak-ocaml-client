@@ -143,14 +143,14 @@ val riak_put :
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> riak_object list Lwt.t
+  riak_put_option list -> riak_object option Lwt.t
 
 val riak_put_raw :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
   string ->
-  riak_put_option list -> riak_vclock option -> riak_object list Lwt.t
+  riak_put_option list -> riak_vclock option -> riak_object option Lwt.t
 
 val riak_del :
   riak_connection ->
@@ -171,7 +171,7 @@ val riak_set_bucket :
   riak_connection -> riak_bucket -> int32 option -> bool option -> unit Lwt.t
 
 val riak_mapred :
-  riak_connection ->
+  riak_connection->
   riak_mr_query ->
   riak_mr_content_type ->
   (string option * int32 option) list Lwt.t

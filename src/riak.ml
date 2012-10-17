@@ -608,7 +608,8 @@ let riak_put (conn:riak_connection) bucket key value options =
     let v = resp.Riak_kv_piqi.Rpb_put_resp.content in
     let newkey = resp.Riak_kv_piqi.Rpb_put_resp.key in
     let newvclock = resp.Riak_kv_piqi.Rpb_put_resp.vclock in
-      return (List.map (riak_process_content bucket newkey newvclock) v)
+    let results = List.map (riak_process_content bucket newkey newvclock) v in
+      return (conn.conn_options.riak_conn_resolve_conflicts results)
   in
   riak_multi conn impl
 
@@ -622,7 +623,8 @@ let riak_put_raw (conn:riak_connection) bucket key value options vclock =
     let v = resp.Riak_kv_piqi.Rpb_put_resp.content in
     let newkey = resp.Riak_kv_piqi.Rpb_put_resp.key in
     let newvclock = resp.Riak_kv_piqi.Rpb_put_resp.vclock in
-      return (List.map (riak_process_content bucket newkey newvclock) v)
+    let results = List.map (riak_process_content bucket newkey newvclock) v in
+      return (conn.conn_options.riak_conn_resolve_conflicts results)
   in
     riak_multi conn impl
 

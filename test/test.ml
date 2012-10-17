@@ -84,13 +84,12 @@ let test_case_put_raw conn =
               newval [Put_return_body true] None in
           let testval os =
             match os with
-              | [] -> assert_failure "No objects returned from put"
-              | o :: [] ->
+              | None -> assert_failure "No objects returned from put"
+              | Some o ->
                   (match o.obj_vclock with
                     | Some v -> assert_bool "Invalid vclock" (v <> "")
                     | None -> assert_failure
                           "Put with return_body didn't return any data")
-              | o :: tl -> assert_failure "Put returned sublings"
           in
             testval objs;
             putmany (n-1)
@@ -127,13 +126,12 @@ let test_case_put conn =
             riak_put conn bucket (Some newkey) newval [Put_return_body true] in
           let testval os =
             match os with
-              | [] -> assert_failure "No objects returned from put"
-              | o :: [] ->
+              | None -> assert_failure "No objects returned from put"
+              | Some o ->
                   (match o.obj_vclock with
                     | Some v -> assert_bool "Invalid vclock" (v <> "")
                     | None -> assert_failure
                           "Put with return_body didn't return any data")
-              | o :: tl -> assert_failure "Put returned sublings"
           in
             testval objs;
             putmany (n-1)
