@@ -110,6 +110,13 @@ type riak_node_id = string
 type riak_version = string
 type riak_vclock = string
 
+let riak_link_defaults =
+  {
+    bucket = None;
+    key = None;
+    tag = None;
+  }
+
 let get_mr_content_type ct =
   match ct with
     | Riak_MR_Json -> "application/json"

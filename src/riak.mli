@@ -117,6 +117,8 @@ type riak_node_id = string
 type riak_version = string
 type riak_vclock = string
 
+val riak_link_defaults : riak_link
+
 val get_mr_content_type : riak_mr_content_type -> string
 
 val riak_ocaml_client_version : string
