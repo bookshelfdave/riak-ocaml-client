@@ -5,7 +5,6 @@ Synopsis:    Riak OCaml Client
 Authors:     Dave Parfitt
 License:     Apache-2.0
 Plugins:     META (0.3), DevFiles (0.3)
-PreBuildCommand: make -C src piqi
 
 Library riak
   Path:       src
