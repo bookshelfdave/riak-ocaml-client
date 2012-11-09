@@ -554,14 +554,14 @@ let riak_connect_with_defaults hostname portnum =
 let riak_disconnect (conn:riak_connection) =
   close conn.sock
 
-
 let riak_ping conn =
   let impl() =
     lwt _ = send_pb_message conn None rpbPingReq rpbPingResp in
       return true
   in
+  try_lwt
     riak_multi conn impl
-
+  with _ -> return false
 
 let riak_get_server_info conn =
   let impl() =
