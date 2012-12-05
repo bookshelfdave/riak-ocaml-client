@@ -41,7 +41,7 @@ make test
 # This line can won't be needed when Piqi reaches the main OPAM repo.
 opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
 opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
-opam install riak-ocaml-client
+opam install riak
 ```
 ## Tutorial
 
