@@ -36,6 +36,8 @@
 
 <p>riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1. Future versions may support all HTTP operations.</p>
 
+<p>Pretty docs <a href="http://metadave.github.com/riak-ocaml-client/">here</a>.</p>
+
 <h2>Dependencies</h2>
 
 <ul>
@@ -75,8 +77,17 @@ make test
 <pre><code># This line can won't be needed when Piqi reaches the main OPAM repo.
 opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
 opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
-opam install riak-ocaml-client
+opam install riak
 </code></pre>
+
+<h3>Compiling with OPAM</h3>
+
+<p>This did the trick for me: </p>
+
+<pre><code>ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg `opam config -I riak` Foo.ml
+</code></pre>
+
+<p>If anyone has an easier way to do this, please let me know! I'm not a master of Ocaml packages ;-)</p>
 
 <h2>Tutorial</h2>
 
@@ -573,9 +584,9 @@ val riak_put_raw :
 * Next version: support HTTP operations, or better yet, implement all HTTP ops as PB messages in Riak
 </code></pre>
 
-<p><strong>© 2012 Dave Parfitt</strong></p>
+<p>** © 2012 Dave Parfitt **</p>
 
-<p>Portions of the documentation are <strong>© 2012 Basho Technologies</strong></p>
+<p>Portions of the documentation are ** © 2012 Basho Technologies **</p>
       </section>
       <footer>
         <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
