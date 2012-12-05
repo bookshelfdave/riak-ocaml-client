@@ -15,7 +15,7 @@ Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
    * On OSX, `brew install protobuf` if you are using Homebrew
 * [http://ounit.forge.ocamlcore.org/](OUnit)
 
-## Installation
+## Building from source
 
 ```
 ./configure
@@ -33,6 +33,16 @@ make test
 * RIAK_OCAML_TEST_IP
 * RIAK_OCAML_TEST_PORT
 
+## Installing via OPAM
+
+*This is currently a work in progress. I hope to have this ready for OPAM when this project reaches V1.0.*
+
+```
+# This line can won't be needed when Piqi reaches the main OPAM repo.
+opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
+opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
+opam install riak-ocaml-client
+```
 ## Tutorial
 
 ###Hello world
@@ -68,7 +78,7 @@ Compile this example with the following:
 
 **Note**: Change the IP/port to the value defined in the Riak app.config `pb_port` and `pb_ip`.
 
-**Note**: If compiling this example from the same directory as the Riak Ocaml Client source, you will see an error like this:
+**Note**: If compiling this example from the same directory as the Riak Ocaml Client source, you may see an error like this:
 `findlib: [WARNING] Interface Riak.cmi occurs in several directories: ., /usr/local/lib/ocaml/site-lib/riak`
 
 ## Development Guide
