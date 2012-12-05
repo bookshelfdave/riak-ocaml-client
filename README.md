@@ -38,7 +38,7 @@ make test
 *This is currently a work in progress. I hope to have this ready for OPAM when this project reaches V1.0.*
 
 ```
-# This line can won't be needed when Piqi reaches the main OPAM repo.
+# This line won't be needed when Piqi reaches the main OPAM repo.
 opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
 opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
 opam install riak
