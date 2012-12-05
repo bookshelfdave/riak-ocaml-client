@@ -43,6 +43,17 @@ opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
 opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
 opam install riak
 ```
+
+### Compiling with OPAM
+
+This did the trick for me: 
+
+```
+ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg `opam config -I riak` Foo.ml
+```
+
+If anyone has an easier way to do this, please let me know! I'm not a master of Ocaml packages ;-)
+
 ## Tutorial
 
 ###Hello world
