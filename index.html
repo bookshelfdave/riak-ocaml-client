@@ -50,7 +50,7 @@
 </ul>
 </li>
 <li><a href="OUnit">http://ounit.forge.ocamlcore.org/</a></li>
-</ul><h2>Installation</h2>
+</ul><h2>Building from source</h2>
 
 <pre><code>./configure
 make 
@@ -68,7 +68,17 @@ make test
 <ul>
 <li>RIAK_OCAML_TEST_IP</li>
 <li>RIAK_OCAML_TEST_PORT</li>
-</ul><h2>Tutorial</h2>
+</ul><h2>Installing via OPAM</h2>
+
+<p><em>This is currently a work in progress. I hope to have this ready for OPAM when this project reaches V1.0.</em></p>
+
+<pre><code># This line can won't be needed when Piqi reaches the main OPAM repo.
+opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
+opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
+opam install riak-ocaml-client
+</code></pre>
+
+<h2>Tutorial</h2>
 
 <h3>Hello world</h3>
 
@@ -100,7 +110,7 @@ handle_unix_error client ();;
 
 <p><strong>Note</strong>: Change the IP/port to the value defined in the Riak app.config <code>pb_port</code> and <code>pb_ip</code>.</p>
 
-<p><strong>Note</strong>: If compiling this example from the same directory as the Riak Ocaml Client source, you will see an error like this:
+<p><strong>Note</strong>: If compiling this example from the same directory as the Riak Ocaml Client source, you may see an error like this:
 <code>findlib: [WARNING] Interface Riak.cmi occurs in several directories: ., /usr/local/lib/ocaml/site-lib/riak</code></p>
 
 <h2>Development Guide</h2>
