@@ -64,18 +64,13 @@ let rbpSearchQueryResp    = 28
 exception RiakException of string * Riak_piqi.uint32
 exception RiakSiblingException of string
 
-type riak_link = Rpb_link.t = {
-  mutable bucket : string option;
-  mutable key : string option;
-  mutable tag : string option
-}
-
 type riak_object = {
   obj_value : string option;
   obj_vclock : string option;
   obj_bucket : string;
   obj_key : string option;
-  obj_links : riak_link list;
+  obj_links : rpb_link list;
+  obj_usermeta : rpb_pair list;
   obj_exists : bool;
 }
 
@@ -109,13 +104,6 @@ type riak_search_index = string
 type riak_node_id = string
 type riak_version = string
 type riak_vclock = string
-
-let riak_link_defaults =
-  {
-    bucket = None;
-    key = None;
-    tag = None;
-  }
 
 let get_mr_content_type ct =
   match ct with
@@ -178,7 +166,7 @@ type riak_search_option =
 
 let  (|>) x f = f x
 
-let new_content ?(links=[]) value =
+let new_content ?(links=[]) ?(usermeta=[]) value =
   { Rpb_content.value = value;
     Rpb_content.content_type = None;
     Rpb_content.charset = None;
@@ -187,7 +175,7 @@ let new_content ?(links=[]) value =
     Rpb_content.links = links;
     Rpb_content.last_mod = None;
     Rpb_content.last_mod_usecs = None;
-    Rpb_content.usermeta = [];
+    Rpb_content.usermeta = usermeta;
     Rpb_content.indexes = [];
     Rpb_content.deleted = None;}
 
@@ -206,12 +194,12 @@ let new_get_req bucket key =
     Rpb_get_req.deletedvclock = None;
   }
 
-let new_put_req bucket key ?links value vclock =
+let new_put_req bucket key ?links ?usermeta value vclock =
   {
     Rpb_put_req.bucket = bucket;
     Rpb_put_req.key = key;
     Rpb_put_req.vclock = vclock;
-    Rpb_put_req.content = (new_content ?links value);
+    Rpb_put_req.content = (new_content ?links ?usermeta value);
     Rpb_put_req.w =
       Some (get_riak_tunable_cap Riak_value_default);
     Rpb_put_req.dw =
@@ -264,6 +252,7 @@ let new_riak_object bucket =
     obj_bucket = bucket;
     obj_key = None;
     obj_links = [];
+    obj_usermeta = [];
     obj_exists = false;
   }
 
@@ -579,6 +568,7 @@ let riak_process_content bucket key vclock item =
     obj_bucket = bucket;
     obj_key = key;
     obj_links = item.Rpb_content.links;
+    obj_usermeta = item.Rpb_content.usermeta;
     obj_exists = true;
   }
 
@@ -610,12 +600,12 @@ let get_vclock_for_put conn bucket key =
   in
     riak_multi conn impl
 
-let riak_put (conn:riak_connection) bucket key ?links value options =
+let riak_put (conn:riak_connection) bucket key ?links ?usermeta value options =
   lwt vclock = match key with
                 | None -> return None
                 | Some keyval -> get_vclock_for_put conn bucket keyval in
   let impl() =
-    let pr = new_put_req bucket key ?links value vclock in
+    let pr = new_put_req bucket key ?links ?usermeta value vclock in
     let putreq = process_put_options options pr in
     let genreq = gen_rpb_put_req putreq in
     lwt pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
@@ -628,9 +618,9 @@ let riak_put (conn:riak_connection) bucket key ?links value options =
   in
   riak_multi conn impl
 
-let riak_put_raw (conn:riak_connection) bucket key ?links value options vclock =
+let riak_put_raw (conn:riak_connection) bucket key ?links ?usermeta value options vclock =
   let impl() =
-    let pr = new_put_req bucket key ?links value None in
+    let pr = new_put_req bucket key ?links ?usermeta value None in
     let putreq = process_put_options options pr in
     let genreq = gen_rpb_put_req putreq in
     lwt pbresp = send_pb_message conn (Some genreq) rpbPutReq rpbPutResp in
