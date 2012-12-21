@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 70a652218dba687aef22dc6087ccad5c)
+# DO NOT EDIT (digest: 61cbc04db3bc2746a48d2ec1d514be34)
 version = "0.9"
 description = "Riak OCaml Client"
-requires = "unix piqi.runtime"
+requires = "unix piqi.runtime riak-pb"
 archive(byte) = "riak.cma"
 archive(byte, plugin) = "riak.cma"
 archive(native) = "riak.cmxa"

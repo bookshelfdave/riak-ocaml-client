@@ -2,16 +2,18 @@ OASISFormat: 0.3
 Name:        riak
 Version:     0.9
 Synopsis:    Riak OCaml Client
+Copyrights:  (C) 2012 Dave Parfitt, (C) 2012 Basho Technologies
 Authors:     Dave Parfitt
 License:     Apache-2.0
+BuildTools: ocamlbuild
 Plugins:     META (0.3), DevFiles (0.3)
-PreBuildCommand: make -C src piqi
 
 Library riak
   Path:       src
   BuildTools: ocamlbuild
+  FindlibName: riak
   Modules:    Riak
-  BuildDepends: unix, piqi.runtime
+  BuildDepends: unix, piqi.runtime, riak-pb
 
 Executable test
   Path:         test
