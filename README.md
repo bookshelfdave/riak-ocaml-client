@@ -14,7 +14,7 @@ Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 * [Protobuffs](http://code.google.com/p/protobuf/)
    * On OSX, `brew install protobuf` if you are using Homebrew
 * [OUnit](http://ounit.forge.ocamlcore.org/)
-* [riak-pb](https://github.com/metadave/ocaml-riak-pb)
+* [riak-pb](https://github.com/metadave/riak-ocaml-pb)
 
 ## Building from source
 
