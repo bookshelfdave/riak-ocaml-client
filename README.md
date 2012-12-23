@@ -11,9 +11,10 @@ Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 
 * [ocamlfind](http://projects.camlcity.org/projects/findlib.html)
 * [Piqi](http://piqi.org/) 
-* [http://code.google.com/p/protobuf/](Protobuffs)
+* [Protobuffs](http://code.google.com/p/protobuf/)
    * On OSX, `brew install protobuf` if you are using Homebrew
-* [http://ounit.forge.ocamlcore.org/](OUnit)
+* [OUnit](http://ounit.forge.ocamlcore.org/)
+* [riak-pb](https://github.com/metadave/ocaml-riak-pb)
 
 ## Building from source
 
@@ -44,7 +45,9 @@ opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
 opam install riak
 ```
 
-### Compiling with OPAM
+***This will also install the riak-pb dependency***
+
+### Manually Compiling with OPAM
 
 This did the trick for me: 
 
@@ -52,7 +55,7 @@ This did the trick for me:
 ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg `opam config -I riak` Foo.ml
 ```
 
-If anyone has an easier way to do this, please let me know! I'm not a master of Ocaml packages ;-)
+If anyone has an easier way to do this, please let me know! I'm not a master of OCaml packages ;-)
 
 ## Tutorial
 
