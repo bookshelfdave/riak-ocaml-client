@@ -43,13 +43,14 @@
 <li>
 <a href="http://piqi.org/">Piqi</a> </li>
 <li>
-<a href="Protobuffs">http://code.google.com/p/protobuf/</a>
+<a href="http://code.google.com/p/protobuf/">Protobuffs</a>
 
 <ul>
 <li>On OSX, <code>brew install protobuf</code> if you are using Homebrew</li>
 </ul>
 </li>
-<li><a href="OUnit">http://ounit.forge.ocamlcore.org/</a></li>
+<li><a href="http://ounit.forge.ocamlcore.org/">OUnit</a></li>
+<li><a href="https://github.com/metadave/ocaml-riak-pb">riak-pb</a></li>
 </ul><h2>Building from source</h2>
 
 <pre><code>./configure
@@ -78,14 +79,16 @@ opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
 opam install riak
 </code></pre>
 
-<h3>Compiling with OPAM</h3>
+<p><strong><em>This will also install the riak-pb dependency</em></strong></p>
+
+<h3>Manually Compiling with OPAM</h3>
 
 <p>This did the trick for me: </p>
 
 <pre><code>ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg `opam config -I riak` Foo.ml
 </code></pre>
 
-<p>If anyone has an easier way to do this, please let me know! I'm not a master of Ocaml packages ;-)</p>
+<p>If anyone has an easier way to do this, please let me know! I'm not a master of OCaml packages ;-)</p>
 
 <h2>Tutorial</h2>
 
@@ -582,9 +585,9 @@ val riak_put_raw :
 * Next version: support HTTP operations, or better yet, implement all HTTP ops as PB messages in Riak
 </code></pre>
 
-<p>** © 2012 Dave Parfitt **</p>
+<p><strong>© 2012 Dave Parfitt</strong></p>
 
-<p>Portions of the documentation are ** © 2012 Basho Technologies **</p>
+<p>Portions of the documentation are <strong>© 2012 Basho Technologies</strong></p>
       </section>
       <footer>
         <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
