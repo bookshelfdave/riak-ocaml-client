@@ -1,8 +1,44 @@
-(*module RP = Riak_messages_piqi_ext*)
+(*
+-------------------------------------------------------------------
+
+ riak_http.ml: Riak OCaml Client
+
+ Copyright (c) 2012 Dave Parfitt
+ All Rights Reserved.
+
+ This file is provided to you under the Apache License,
+ Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License.  You may obtain
+ a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the Licese is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied.  See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-------------------------------------------------------------------
+*)
+
+
 open Riak_messages_piqi
 open Riak_messages_piqi_ext
 
- type riak_http_get_option =
+
+type riak_http_connection_params = {
+  http_hostname : string;
+  http_port : int;
+}
+
+let new_riak_http_connection_params hostname port = {
+  http_hostname = hostname;
+  http_port = port
+}
+
+
+type riak_http_get_option =
   | Http_Get_r of int
   | Http_Get_pr of int
   | Http_Get_basic_quorum of bool
@@ -13,6 +49,11 @@ open Riak_messages_piqi_ext
   | Get_head of bool
   | Get_deleted_vclock of bool*)
 
+
+(* TODO: will need valid escape, etc *)
+let make_param name value =
+  name ^ "=" ^ value
+
 let http_get_options opts =
   let rec process_http_get_options opts params headers =
     match opts with
@@ -20,23 +61,23 @@ let http_get_options opts =
       | (o::os) ->
           match o with
             | Http_Get_r v ->
-                let param = "r=" ^ string_of_int(v) in
+                let param = make_param "r" (string_of_int(v)) in
                 let nextreq = param :: params in
                   process_http_get_options os nextreq headers
             | Http_Get_pr v ->
-                let param = "pr=" ^ string_of_int(v) in
+                let param = make_param "pr"  (string_of_int(v)) in
                 let nextreq = param :: params in
                   process_http_get_options os nextreq headers
             | Http_Get_basic_quorum v ->
-                let param = "basic_quorum=" ^ string_of_bool(v) in
+                let param = make_param "basic_quorum" (string_of_bool(v)) in
                 let nextreq = param :: params in
                   process_http_get_options os nextreq headers
             | Http_Get_notfound_ok v ->
-                let param = "notfound_ok=" ^ string_of_bool(v) in
+                let param = make_param "notfound_ok" (string_of_bool(v)) in
                 let nextreq = param :: params in
                   process_http_get_options os nextreq headers
             | Http_Get_vtag v ->
-                let param = "vtag=" ^ v in
+                let param = make_param "vtag" v  in
                 let nextreq = param :: params in
                   process_http_get_options os nextreq headers
             | Http_Get_all_siblings ->
