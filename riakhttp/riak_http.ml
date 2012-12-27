@@ -28,15 +28,22 @@ open Riak_messages_piqi_ext
 
 
 type riak_http_connection_params = {
+  http_protocol : string; (* http/https *)
   http_hostname : string;
   http_port : int;
 }
 
 let new_riak_http_connection_params hostname port = {
+  http_protocol = "http";
   http_hostname = hostname;
   http_port = port
 }
 
+let base_url cparams =
+  cparams.http_protocol ^ "://" ^ cparams.http_hostname ^ ":" ^ (string_of_int(cparams.http_port))
+
+let get_url cparams bucket key paramstring =
+  (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
 
 type riak_http_get_option =
   | Http_Get_r of int
@@ -53,6 +60,10 @@ type riak_http_get_option =
 (* TODO: will need valid escape, etc *)
 let make_param name value =
   name ^ "=" ^ value
+
+(* TODO: escape, etc*)
+let join_params params =
+  String.concat "&" params
 
 let http_get_options opts =
   let rec process_http_get_options opts params headers =
@@ -86,11 +97,10 @@ let http_get_options opts =
   let (params, headers) = process_http_get_options opts [] [] in
   match (List.length params) with
     | 0 -> ("", headers)
-    | _ -> 
-        let joined = String.concat "&" params in
+    | _ ->
+        let joined = join_params params in
         let paramstring = "?" ^ joined in
         (paramstring, headers)
-
 
 let writer accum data =
   Buffer.add_string accum data;
@@ -111,7 +121,7 @@ let http_term () =
   Curl.global_cleanup()
 
 let http_op url connfun =
-    let result = Buffer.create 16384
+    let result = Buffer.create 1024
     and errorBuffer = ref "" in
     try
       let connection = Curl.init () in
@@ -135,10 +145,12 @@ let http_op url connfun =
         Printf.fprintf stderr "Caught exception: %s\n" s;
         ""
 
-let riak_http_get bucket key options =
+let riak_http_get cparams bucket key options =
   let (paramstring, headers) = http_get_options options in
   let connfun conn = Curl.set_httpheader conn headers in
-  let url = ("http://localhost:8091/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring) in
+  let url = get_url cparams bucket key paramstring in
+  (*let url = ("http://localhost:8091/buckets/" ^ bucket ^ "/keys/" ^ key ^
+   * paramstring) in*)
     print_endline url;
     http_op url (Some connfun)
 
@@ -147,7 +159,8 @@ let riak_http_get_old key =
 
 let _ =
   http_init();
-  let result = riak_http_get "test" "doc" [Http_Get_r 1] in
+  let cparams = new_riak_http_connection_params "localhost" 8091 in
+  let result = riak_http_get cparams "test" "doc" [Http_Get_r 1] in
     print_endline result;
   (*let result = http_op "http://localhost:8091/" in
     print_endline result;*)
