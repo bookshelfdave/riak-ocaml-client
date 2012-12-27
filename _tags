@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: de820511a3b397846e8a0ef21784c278)
+# DO NOT EDIT (digest: fe4b4d12f4061204fdbf1a2d96beca83)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -29,4 +29,19 @@
 <test/*.ml{,i}>: pkg_piqi.runtime
 <test/*.ml{,i}>: pkg_oUnit
 <test/*.ml{,i}>: pkg_riak-pb
+# Executable httptest
+"riakhttp/riak_http.byte": use_riak
+"riakhttp/riak_http.byte": pkg_curl
+"riakhttp/riak_http.byte": pkg_unix
+"riakhttp/riak_http.byte": pkg_piqi.lib
+"riakhttp/riak_http.byte": pkg_piqi.runtime
+"riakhttp/riak_http.byte": pkg_oUnit
+"riakhttp/riak_http.byte": pkg_riak-pb
+<riakhttp/*.ml{,i}>: use_riak
+<riakhttp/*.ml{,i}>: pkg_curl
+<riakhttp/*.ml{,i}>: pkg_unix
+<riakhttp/*.ml{,i}>: pkg_piqi.lib
+<riakhttp/*.ml{,i}>: pkg_piqi.runtime
+<riakhttp/*.ml{,i}>: pkg_oUnit
+<riakhttp/*.ml{,i}>: pkg_riak-pb
 # OASIS_STOP

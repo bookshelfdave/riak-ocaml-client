@@ -7,6 +7,7 @@ Authors:     Dave Parfitt
 License:     Apache-2.0
 BuildTools: ocamlbuild
 Plugins:     META (0.3), DevFiles (0.3)
+PreBuildCommand: make -C riakhttp
 
 Library riak
   Path:       src
@@ -22,6 +23,13 @@ Executable test
   BuildDepends: unix, piqi.runtime, oUnit, riak
   Install:      false
   Build$:       flag(tests)
+
+Executable httptest
+  Path:         riakhttp
+  BuildTools:   ocamlbuild
+  MainIs:       riak_http.ml
+  BuildDepends: curl, unix, piqi.lib, piqi.runtime, oUnit, riak
+  Install:      false
 
 Test main
   Run$:    flag(tests)

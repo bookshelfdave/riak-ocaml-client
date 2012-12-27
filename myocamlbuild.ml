@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: f929ba547db16c8612c4d562fb346519) *)
+(* DO NOT EDIT (digest: 0f62199e3b09751e3730373e9cfea21e) *)
 module OASISGettext = struct
 (* # 21 "/Users/dparfitt/.opam/3.12.1+natdynlink-osx/build/oasis.0.3.0/src/oasis/OASISGettext.ml" *)
 
@@ -480,7 +480,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml = [("riak", ["src"])];
      lib_c = [];
      flags = [];
-     includes = [("test", ["src"])];
+     includes = [("test", ["src"]); ("riakhttp", ["src"])];
      }
   ;;
 

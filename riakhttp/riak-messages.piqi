@@ -1,0 +1,71 @@
+.record [
+    .name httplistresources-response
+    .field [
+        .name riak-kv-wm-buckets
+        .type string
+        .repeated
+        .json-name "riak_kv_wm_buckets"
+    ]
+    .field [
+        .name riak-kv-wm-index
+        .type string
+        .repeated
+        .json-name "riak_kv_wm_index"
+    ]
+    .field [
+        .name riak-kv-wm-keylist
+        .type string
+        .repeated
+        .json-name riak_kv_wm_keylist
+    ]
+    .field [
+        .name riak-kv-wm-link-walker
+        .type string
+        .repeated
+        .json-name riak_kv_wm_link_walker
+    ]
+    .field [
+        .name riak-kv-wm-mapred
+        .type string
+        .repeated
+        .json-name riak_kv_wm_mapred
+    ]
+    .field [
+        .name riak-kv-wm-object
+        .type string
+        .repeated
+        .json-name riak_kv_wm_object
+    ]
+    .field [
+        .name riak-kv-wm-ping
+        .type string
+        .repeated
+        .json-name riak_kv_wm_ping
+    ]
+    .field [
+        .name riak-kv-wm-props
+        .type string
+        .repeated
+        .json-name riak_kv_wm_props
+    ]
+    .field [
+        .name riak-kv-wm-stats
+        .type string
+        .repeated
+        .json-name riak_kv_wm_stats
+    ]
+    .field [
+        .name riak-solr-searcher-wm
+        .type string
+        .json-name riak_solr_searcher_wm
+        .repeated
+    ]
+    .field [
+        .name riak-solr-indexer-wm
+        .type string
+        .json-name riak_solr_indexer_wm
+        .repeated
+    ]
+
+
+]
