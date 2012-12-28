@@ -28,34 +28,67 @@ open Riak_messages_piqi_ext
 
 exception RiakHTTPError of int * string;;
 
+
+let http_ok = 200
+let http_multiple_choices = 300
+let http_not_modified = 304
+
+type riak_http_paths =
+  | Riak_Http_New (* the default *)
+  | Riak_Http_Old
+
 type riak_http_connection_params = {
   http_protocol : string; (* http/https *)
   http_hostname : string;
   http_port : int;
+  http_url_paths : riak_http_paths;
 }
 
 let new_riak_http_connection_params hostname port = {
   http_protocol = "http";
   http_hostname = hostname;
-  http_port = port
+  http_port = port;
+  http_url_paths = Riak_Http_New;
 }
 
 let base_url cparams =
   cparams.http_protocol ^ "://" ^ cparams.http_hostname ^ ":" ^ (string_of_int(cparams.http_port))
 
-let get_url cparams bucket key paramstring =
+let fetch_url cparams bucket key paramstring =
   (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
 
-type riak_http_get_option =
-  | Http_Get_r of int
-  | Http_Get_pr of int
-  | Http_Get_basic_quorum of bool
-  | Http_Get_notfound_ok of bool
-  | Http_Get_all_siblings
-  | Http_Get_vtag of string
+let store_url cparams bucket key paramstring =
+  let prefix = (base_url cparams)  ^ "/buckets/" ^ bucket ^ "/keys" in
+  match key with
+    | None -> prefix
+    | Some key -> prefix ^ "/" ^ key
+
+type riak_http_fetch_option =
+  | Http_Fetch_r of int
+  | Http_Fetch_pr of int
+  | Http_Fetch_basic_quorum of bool
+  | Http_Fetch_notfound_ok of bool
+  | Http_Fetch_all_siblings
+  | Http_Fetch_vtag of string
   (*| Get_if_modified of string
   | Get_head of bool
   | Get_deleted_vclock of bool*)
+
+type riak_http_content_type =
+  | Content_Type_text_plain
+  | Content_Type_application_json
+  | Content_Type_user_defined of string
+
+type riak_http_store_option =
+  | Http_Store_w of int
+  | Http_Store_dw of int
+  | Http_Store_pw of int
+  | Http_Store_return_body of bool
+  | Http_Store_if_none_match
+  | Http_Store_if_match
+  | Http_Store_if_modified_since
+  | Http_Store_if_unmodified_since
+  | Http_Store_content_type of riak_http_content_type
 
 
 (* TODO: will need valid escape, etc *)
@@ -66,36 +99,36 @@ let make_param name value =
 let join_params params =
   String.concat "&" params
 
-let http_get_options opts =
-  let rec process_http_get_options opts params headers =
+let http_fetch_options opts =
+  let rec process_http_fetch_options opts params headers =
     match opts with
         [] -> (params, headers)
       | (o::os) ->
           match o with
-            | Http_Get_r v ->
+            | Http_Fetch_r v ->
                 let param = make_param "r" (string_of_int(v)) in
                 let nextreq = param :: params in
-                  process_http_get_options os nextreq headers
-            | Http_Get_pr v ->
+                  process_http_fetch_options os nextreq headers
+            | Http_Fetch_pr v ->
                 let param = make_param "pr"  (string_of_int(v)) in
                 let nextreq = param :: params in
-                  process_http_get_options os nextreq headers
-            | Http_Get_basic_quorum v ->
+                  process_http_fetch_options os nextreq headers
+            | Http_Fetch_basic_quorum v ->
                 let param = make_param "basic_quorum" (string_of_bool(v)) in
                 let nextreq = param :: params in
-                  process_http_get_options os nextreq headers
-            | Http_Get_notfound_ok v ->
+                  process_http_fetch_options os nextreq headers
+            | Http_Fetch_notfound_ok v ->
                 let param = make_param "notfound_ok" (string_of_bool(v)) in
                 let nextreq = param :: params in
-                  process_http_get_options os nextreq headers
-            | Http_Get_vtag v ->
+                  process_http_fetch_options os nextreq headers
+            | Http_Fetch_vtag v ->
                 let param = make_param "vtag" v  in
                 let nextreq = param :: params in
-                  process_http_get_options os nextreq headers
-            | Http_Get_all_siblings ->
+                  process_http_fetch_options os nextreq headers
+            | Http_Fetch_all_siblings ->
                 let nextheaders = "Accept: multipart/mixed" :: headers in
-                  process_http_get_options os params nextheaders in
-  let (params, headers) = process_http_get_options opts [] [] in
+                  process_http_fetch_options os params nextheaders in
+  let (params, headers) = process_http_fetch_options opts [] [] in
   match (List.length params) with
     | 0 -> ("", headers)
     | _ ->
@@ -145,21 +178,31 @@ let http_op url connfun expected_response_codes =
           Printf.fprintf stderr "Caught exception: %s\n" s;
           (500, s)
 
-(* 406, allow_mult probably not set *)
-let riak_http_get cparams bucket key options =
+(* 406 means allow_mult on a bucket probably isn't set *)
+let riak_http_fetch cparams bucket key options =
   let expected_codes = [200; 300; 304] in
-  let (paramstring, headers) = http_get_options options in
+  let (paramstring, headers) = http_fetch_options options in
   let connfun conn = Curl.set_httpheader conn headers in
-  let url = get_url cparams bucket key paramstring in
+  let url = fetch_url cparams bucket key paramstring in
     http_op url (Some connfun) expected_codes
 
-let riak_http_get_old key =
+(* lots of parameters! should I restructure this? *)
+let riak_http_store cparams bucket key vclock options =
+  (* also: Meta headers, Indexes, Links *)
   true
+
+let riak_http_store_json cparams bucket key vclock options =
+  let ct = (Http_Store_content_type Content_Type_application_json :: options) in
+  riak_http_store cparams bucket key vclock ct
+
+let riak_http_store_text cparams bucket key vclock options =
+  let ct = (Http_Store_content_type Content_Type_text_plain :: options) in
+  riak_http_store cparams bucket key vclock ct
 
 let _ =
   http_init();
   let cparams = new_riak_http_connection_params "localhost" 8091 in
-  let (code, result) = riak_http_get cparams "test" "doc" [] in
+  let (code, result) = riak_http_fetch cparams "test" "doc" [] in
     print_endline result;
   (*let result = http_op "http://localhost:8091/" in
     print_endline result;*)
