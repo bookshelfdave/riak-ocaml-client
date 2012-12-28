@@ -26,7 +26,6 @@
 open Riak_messages_piqi
 open Riak_messages_piqi_ext
 
-
 type riak_http_connection_params = {
   http_protocol : string; (* http/https *)
   http_hostname : string;
@@ -106,10 +105,6 @@ let writer accum data =
   Buffer.add_string accum data;
   String.length data
 
-(*let showContent content =
-  Printf.printf "%s" (Buffer.contents content);
-  flush stdout *)
-
 let getContent connection url =
   Curl.set_url connection url;
   Curl.perform connection
@@ -121,8 +116,8 @@ let http_term () =
   Curl.global_cleanup()
 
 let http_op url connfun =
-    let result = Buffer.create 1024
-    and errorBuffer = ref "" in
+  let result = Buffer.create 1024
+  and errorBuffer = ref "" in
     try
       let connection = Curl.init () in
         Curl.set_errorbuffer connection errorBuffer;
@@ -130,29 +125,31 @@ let http_op url connfun =
         Curl.set_followlocation connection true;
         Curl.set_url connection url;
         (match connfun with
-          | None -> ()
-          | Some cf -> cf connection);
+           | None -> ()
+           | Some cf -> cf connection);
         (*Curl.set_httpheader connection ["Accept: application/json"];*)
         Curl.perform connection;
         (*showContent result;*)
-        Curl.cleanup connection;
-        Buffer.contents result
+        let response_code = Curl.get_responsecode connection in
+          print_endline ("Response code = " ^ string_of_int(response_code));
+          Curl.cleanup connection;
+          (response_code, Buffer.contents result)
     with
       | Curl.CurlException (reason, code, str) ->
-        Printf.fprintf stderr "Error: %s\n" !errorBuffer;
-        ""
+          Printf.fprintf stderr "Error: %s\n" !errorBuffer;
+          (* TODO: check this *)
+          (code, str)
       | Failure s ->
-        Printf.fprintf stderr "Caught exception: %s\n" s;
-        ""
+          Printf.fprintf stderr "Caught exception: %s\n" s;
+          (500, s)
 
+(* 406, allow_mult probably not set *)
 let riak_http_get cparams bucket key options =
   let (paramstring, headers) = http_get_options options in
   let connfun conn = Curl.set_httpheader conn headers in
   let url = get_url cparams bucket key paramstring in
-  (*let url = ("http://localhost:8091/buckets/" ^ bucket ^ "/keys/" ^ key ^
-   * paramstring) in*)
-    print_endline url;
-    http_op url (Some connfun)
+        print_endline url;
+  http_op url (Some connfun)
 
 let riak_http_get_old key =
   true
@@ -160,7 +157,7 @@ let riak_http_get_old key =
 let _ =
   http_init();
   let cparams = new_riak_http_connection_params "localhost" 8091 in
-  let result = riak_http_get cparams "test" "doc" [Http_Get_r 1] in
+  let (code, result) = riak_http_get cparams "test" "doc" [Http_Get_all_siblings] in
     print_endline result;
   (*let result = http_op "http://localhost:8091/" in
     print_endline result;*)
