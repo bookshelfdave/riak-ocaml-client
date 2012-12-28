@@ -26,6 +26,8 @@
 open Riak_messages_piqi
 open Riak_messages_piqi_ext
 
+exception RiakHTTPError of int * string;;
+
 type riak_http_connection_params = {
   http_protocol : string; (* http/https *)
   http_hostname : string;
@@ -115,7 +117,7 @@ let http_init () =
 let http_term () =
   Curl.global_cleanup()
 
-let http_op url connfun =
+let http_op url connfun expected_response_codes =
   let result = Buffer.create 1024
   and errorBuffer = ref "" in
     try
@@ -127,13 +129,13 @@ let http_op url connfun =
         (match connfun with
            | None -> ()
            | Some cf -> cf connection);
-        (*Curl.set_httpheader connection ["Accept: application/json"];*)
         Curl.perform connection;
-        (*showContent result;*)
         let response_code = Curl.get_responsecode connection in
           print_endline ("Response code = " ^ string_of_int(response_code));
           Curl.cleanup connection;
-          (response_code, Buffer.contents result)
+          match List.mem response_code expected_response_codes with
+            | true -> (response_code, Buffer.contents result)
+            | false -> raise (RiakHTTPError(response_code, Buffer.contents result));
     with
       | Curl.CurlException (reason, code, str) ->
           Printf.fprintf stderr "Error: %s\n" !errorBuffer;
@@ -145,11 +147,11 @@ let http_op url connfun =
 
 (* 406, allow_mult probably not set *)
 let riak_http_get cparams bucket key options =
+  let expected_codes = [200; 300; 304] in
   let (paramstring, headers) = http_get_options options in
   let connfun conn = Curl.set_httpheader conn headers in
   let url = get_url cparams bucket key paramstring in
-        print_endline url;
-  http_op url (Some connfun)
+    http_op url (Some connfun) expected_codes
 
 let riak_http_get_old key =
   true
@@ -157,7 +159,7 @@ let riak_http_get_old key =
 let _ =
   http_init();
   let cparams = new_riak_http_connection_params "localhost" 8091 in
-  let (code, result) = riak_http_get cparams "test" "doc" [Http_Get_all_siblings] in
+  let (code, result) = riak_http_get cparams "test" "doc" [] in
     print_endline result;
   (*let result = http_op "http://localhost:8091/" in
     print_endline result;*)
