@@ -136,6 +136,34 @@ let http_fetch_options opts =
         let paramstring = "?" ^ joined in
         (paramstring, headers)
 
+let http_store_options opts =
+  let rec process_http_store_options opts params headers =
+    match opts with
+        [] -> (params, headers)
+      | (o::os) ->
+          match o with
+            | Http_Store_w v ->
+                let param = make_param "w" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_store_options os nextreq headers
+            | Http_Store_dw v ->
+                let param = make_param "dw"  (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_store_options os nextreq headers
+            | Http_Store_pw v ->
+                let param = make_param "pw"  (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_store_options os nextreq headers
+            | _ -> process_http_store_options os params headers in
+  let (params, headers) = process_http_store_options opts [] [] in
+  match (List.length params) with
+    | 0 -> ("", headers)
+    | _ ->
+        let joined = join_params params in
+        let paramstring = "?" ^ joined in
+        (paramstring, headers)
+
+
 let writer accum data =
   Buffer.add_string accum data;
   String.length data
@@ -188,8 +216,13 @@ let riak_http_fetch cparams bucket key options =
 
 (* lots of parameters! should I restructure this? *)
 let riak_http_store cparams bucket key vclock options =
-  (* also: Meta headers, Indexes, Links *)
-  true
+  (* TODO: Meta headers, Indexes, Links *)
+  let expected_codes = [200; 201; 204; 300] in
+  let (paramstring, headers) = http_store_options options in
+  let connfun conn = Curl.set_httpheader conn headers in
+  let url = store_url cparams bucket key paramstring in
+    http_op url (Some connfun) expected_codes
+
 
 let riak_http_store_json cparams bucket key vclock options =
   let ct = (Http_Store_content_type Content_Type_application_json :: options) in
