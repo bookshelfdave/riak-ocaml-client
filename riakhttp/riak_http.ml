@@ -26,8 +26,10 @@
 open Riak_messages_piqi
 open Riak_messages_piqi_ext
 
-exception RiakHTTPError of int * string;;
+type http_error_code = int
+type http_error_desc = string
 
+exception RiakHTTPError of http_error_code * http_error_desc;;
 
 let http_ok = 200
 let http_multiple_choices = 300
