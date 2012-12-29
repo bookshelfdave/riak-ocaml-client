@@ -28,7 +28,7 @@ Executable httptest
   Path:         riakhttp
   BuildTools:   ocamlbuild
   MainIs:       riak_http.ml
-  BuildDepends: curl, unix, piqi.lib, piqi.runtime, oUnit, riak
+  BuildDepends: curl, netstring, unix, piqi.lib, piqi.runtime, oUnit, riak
   Install:      false
 
 Test main

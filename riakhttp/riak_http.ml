@@ -95,7 +95,7 @@ type riak_http_store_option =
 
 (* TODO: will need valid escape, etc *)
 let make_param name value =
-  name ^ "=" ^ value
+  name ^ "=" ^ (Netencoding.Url.encode value)
 
 (* TODO: escape, etc*)
 let join_params params =
@@ -214,6 +214,7 @@ let riak_http_fetch cparams bucket key options =
   let (paramstring, headers) = http_fetch_options options in
   let connfun conn = Curl.set_httpheader conn headers in
   let url = fetch_url cparams bucket key paramstring in
+    print_endline ("URL = " ^ url);
     http_op url (Some connfun) expected_codes
 
 (* lots of parameters! should I restructure this? *)
@@ -237,7 +238,7 @@ let riak_http_store_text cparams bucket key vclock options =
 let _ =
   http_init();
   let cparams = new_riak_http_connection_params "localhost" 8091 in
-  let (code, result) = riak_http_fetch cparams "test" "doc" [] in
+  let (code, result) = riak_http_fetch cparams "test" "doc" [Http_Fetch_r 2; Http_Fetch_basic_quorum false] in
     print_endline result;
   (*let result = http_op "http://localhost:8091/" in
     print_endline result;*)
