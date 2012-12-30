@@ -91,6 +91,12 @@ type riak_http_delete_option =
 let base_url cparams =
   cparams.http_protocol ^ "://" ^ cparams.http_hostname ^ ":" ^ (string_of_int(cparams.http_port))
 
+let ping_url cparams =
+  (base_url cparams) ^ "/ping"
+
+let stats_url cparams =
+  (base_url cparams) ^ "/stats"
+
 let fetch_url cparams bucket key paramstring =
   (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
 
@@ -288,6 +294,24 @@ let riak_http_delete cparams bucket key options =
   let (paramstring, headers) = http_delete_options options in
   let url = delete_url cparams bucket key paramstring in
     http_op url None expected_codes
+
+let riak_http_ping cparams =
+  let expected_codes = [200] in
+  let url = ping_url cparams in
+    http_op url None expected_codes
+
+let riak_http_stats cparams content_type =
+  let expected_codes = [200] in
+  let url = stats_url cparams in
+  let headers = [("Content-Type: " ^ content_type)] in
+  let connfun conn = Curl.set_httpheader conn headers in
+    http_op url (Some connfun) expected_codes
+
+let riak_http_stats_json cparams =
+  riak_http_stats cparams "application/json"
+
+let riak_http_stats_text cparams =
+  riak_http_stats cparams "text/plain"
 
 let _ =
   http_init();
