@@ -448,12 +448,29 @@ let riak_http_get_bucket_props cparams bucket =
   let connfun conn = Curl.set_httpheader conn ["Content-Type: application/json"] in
     http_op url (Some connfun) expected_codes
 
+let string_reader data local_counter maxread =
+    let len = String.length data in
+      if !local_counter + maxread < (len -1) then
+        begin
+          let result = String.sub data !local_counter maxread in
+          local_counter := !local_counter + maxread;
+          result
+        end
+      else
+        let finallen = len - !local_counter in
+          String.sub data !local_counter finallen
+
 let riak_http_set_bucket_props cparams bucket options =
   let expected_codes = [204] in
   let url = set_bucket_props_url cparams bucket in
+  let data = http_set_bucket_prop_options options in
+  let local_counter = ref 0 in
   let connfun conn = Curl.set_httpheader conn ["Content-Type: application/json"];
+                     Curl.set_readfunction conn (string_reader data local_counter);
+                     Curl.set_infilesize conn (String.length data);
+                     Curl.set_upload conn true;
                      Curl.set_put conn true
-                      in
+  in
     http_op url (Some connfun) expected_codes
 
 let _ =
