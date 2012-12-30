@@ -1,4 +1,87 @@
 .record [
+    .name httpsetbucketprops
+    .field [
+      .name props
+      .type bucketprops
+      .json-name "props"
+      .repeated
+    ]
+]
+
+.record [
+    .name bucketprops
+    .field [
+      .name nval
+      .type int
+      .json-name "n_val"
+      .optional
+    ]
+
+    .field [
+      .name allowmult
+      .type bool
+      .json-name "allow_mult"
+      .optional
+    ]
+
+    .field [
+      .name lastwritewins
+      .type bool
+      .json-name "last_write_wins"
+      .optional
+    ]
+
+    .field [
+      .name precommit
+      .type string
+      .json-name "precommit"
+      .optional
+    ]
+
+    .field [
+      .name postcommit
+      .type string
+      .json-name "precommit"
+      .optional
+    ]
+
+    .field [
+      .name r
+      .type int
+      .json-name "r"
+      .optional
+    ]
+
+    .field [
+      .name w
+      .type int
+      .json-name "w"
+      .optional
+    ]
+
+    .field [
+      .name dr
+      .type int
+      .json-name "dr"
+      .optional
+    ]
+
+    .field [
+      .name rw
+      .type int
+      .json-name "rw"
+      .optional
+    ]
+
+    .field [
+      .name backend
+      .type string
+      .json-name "backend"
+      .optional
+    ]
+]
+
+.record [
     .name httplistresources-response
     .field [
         .name riak-kv-wm-buckets

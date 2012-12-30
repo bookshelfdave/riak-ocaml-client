@@ -88,6 +88,25 @@ type riak_http_delete_option =
   | Http_Delete_dw of int
   | Http_Delete_pw of int
 
+
+type riak_http_tunable_cap =
+  | Http_Tunable_cap_all
+  | Http_Tunable_cap_quorum
+  | Http_Tunable_cap_one
+  | Http_Tunable_cap_value of int
+
+type riak_http_bucket_props_option =
+  | Http_Bucket_n_val of int
+  | Http_Bucket_allow_mult of bool
+  | Http_Bucket_last_write_wins of bool
+  | Http_Bucket_precommit of string
+  | Http_Bucket_postcommit of string
+  | Http_Bucket_r of riak_http_tunable_cap
+  | Http_Bucket_w of riak_http_tunable_cap
+  | Http_Bucket_dw of riak_http_tunable_cap
+  | Http_Bucket_rw of riak_http_tunable_cap
+  | Http_Bucket_backend of string
+
 let base_url cparams =
   cparams.http_protocol ^ "://" ^ cparams.http_hostname ^ ":" ^ (string_of_int(cparams.http_port))
 
@@ -106,6 +125,13 @@ let list_keys_url cparams bucket =
 let fetch_url cparams bucket key paramstring =
   (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
 
+let get_bucket_props_url cparams bucket =
+  (base_url cparams) ^ "/buckets/" ^ "/props"
+
+let set_bucket_props_url cparams bucket =
+  (base_url cparams) ^ "/buckets/" ^ "/props"
+
+
 let delete_url cparams bucket key paramstring =
   (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
 
@@ -115,14 +141,33 @@ let store_url cparams bucket key paramstring =
     | None -> prefix
     | Some key -> prefix ^ "/" ^ key
 
-(* TODO: will need valid escape, etc *)
 let make_param name value =
   name ^ "=" ^ (Netencoding.Url.encode value)
 
-(* TODO: escape, etc*)
 let join_params params =
   String.concat "&" params
 
+let make_json_int name value =
+  "\"" ^ name ^ "\":" ^ (string_of_int(value))
+
+let make_json_string name value =
+  "\"" ^ name ^ "\":\"" ^ value ^ "\""
+
+let make_json_bool name value =
+  "\"" ^ name ^ "\":" ^ (string_of_bool(value))
+
+let join_json_params params =
+  String.concat "," params
+
+let json_param_of_http_tunable_cap name c =
+  match c with
+    | Http_Tunable_cap_all -> make_json_string name "all"
+    | Http_Tunable_cap_quorum -> make_json_string name "quorum"
+    | Http_Tunable_cap_one -> make_json_string name "one"
+    | Http_Tunable_cap_value v -> make_json_int name v
+
+(* these http_*_options functions are a bit boiler-plate-ish,
+ * but they do the trick *)
 let http_fetch_options opts =
   let rec process_http_fetch_options opts params headers =
     match opts with
@@ -224,6 +269,59 @@ let http_delete_options opts =
         let joined = join_params params in
         let paramstring = "?" ^ joined in
         (paramstring, headers)
+
+let http_set_bucket_prop_options opts =
+  let rec process_http_bucket_prop_options opts params =
+    match opts with
+        [] -> params
+      | (o::os) ->
+          match o with
+            | Http_Bucket_n_val v ->
+                let param = make_json_int "n_val" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+            | Http_Bucket_allow_mult v ->
+                let param = make_json_bool "allow_mult" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+            | Http_Bucket_last_write_wins v ->
+                let param = make_json_bool "last_write_wins" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+            | Http_Bucket_precommit v ->
+                let param = make_json_string "precommit" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+            | Http_Bucket_postcommit v ->
+                let param = make_json_string "postcommit" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+            | Http_Bucket_r v ->
+                let param = json_param_of_http_tunable_cap "r" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+             | Http_Bucket_w v ->
+                let param = json_param_of_http_tunable_cap "w" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+             | Http_Bucket_dw v ->
+                let param = json_param_of_http_tunable_cap "dw" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+             | Http_Bucket_rw v ->
+                let param = json_param_of_http_tunable_cap "pw" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq
+             | Http_Bucket_backend v->
+                let param = make_json_string "backend" v in
+                let nextreq = param :: params in
+                  process_http_bucket_prop_options os nextreq in
+  let params = process_http_bucket_prop_options opts []  in
+  match (List.length params) with
+    | 0 -> "{\"props\":{}}"
+    | _ ->
+        let joined = join_json_params params in
+        "{\"props\":{" ^ joined ^ "}}"
 
 let writer accum data =
   Buffer.add_string accum data;
@@ -344,11 +442,25 @@ let riak_http_list_keys cparams bucket stream props =
         | false -> () in
    http_op url (Some connfun) expected_codes
 
+let riak_http_get_bucket_props cparams bucket =
+  let expected_codes = [200] in
+  let url = get_bucket_props_url cparams bucket in
+  let connfun conn = Curl.set_httpheader conn ["Content-Type: application/json"] in
+    http_op url (Some connfun) expected_codes
+
+let riak_http_set_bucket_props cparams bucket options =
+  let expected_codes = [204] in
+  let url = set_bucket_props_url cparams bucket in
+  let connfun conn = Curl.set_httpheader conn ["Content-Type: application/json"];
+                     Curl.set_put conn true
+                      in
+    http_op url (Some connfun) expected_codes
+
 let _ =
   http_init();
-  let cparams = new_riak_http_connection_params "localhost" 8091 in
+  (*let cparams = new_riak_http_connection_params "localhost" 8091 in
   let (code, result) = riak_http_fetch cparams "test" "doc" [Http_Fetch_r 2; Http_Fetch_basic_quorum false] in
-    print_endline result;
+    print_endline result;*)
   (*let result = http_op "http://localhost:8091/" in
     print_endline result;*)
     (*let opts = Piqirun_ext.make_options ~use_strict_parsing:false () in*)
