@@ -53,18 +53,6 @@ let new_riak_http_connection_params hostname port = {
   http_url_paths = Riak_Http_New;
 }
 
-let base_url cparams =
-  cparams.http_protocol ^ "://" ^ cparams.http_hostname ^ ":" ^ (string_of_int(cparams.http_port))
-
-let fetch_url cparams bucket key paramstring =
-  (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
-
-let store_url cparams bucket key paramstring =
-  let prefix = (base_url cparams)  ^ "/buckets/" ^ bucket ^ "/keys" in
-  match key with
-    | None -> prefix
-    | Some key -> prefix ^ "/" ^ key
-
 type riak_http_fetch_option =
   | Http_Fetch_r of int
   | Http_Fetch_pr of int
@@ -92,6 +80,28 @@ type riak_http_store_option =
   | Http_Store_if_unmodified_since
   | Http_Store_content_type of riak_http_content_type
 
+type riak_http_delete_option =
+  | Http_Delete_rw of int
+  | Http_Delete_r of int
+  | Http_Delete_pr of int
+  | Http_Delete_w of int
+  | Http_Delete_dw of int
+  | Http_Delete_pw of int
+
+let base_url cparams =
+  cparams.http_protocol ^ "://" ^ cparams.http_hostname ^ ":" ^ (string_of_int(cparams.http_port))
+
+let fetch_url cparams bucket key paramstring =
+  (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
+
+let delete_url cparams bucket key paramstring =
+  (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
+
+let store_url cparams bucket key paramstring =
+  let prefix = (base_url cparams)  ^ "/buckets/" ^ bucket ^ "/keys" in
+  match key with
+    | None -> prefix
+    | Some key -> prefix ^ "/" ^ key
 
 (* TODO: will need valid escape, etc *)
 let make_param name value =
@@ -165,6 +175,43 @@ let http_store_options opts =
         let paramstring = "?" ^ joined in
         (paramstring, headers)
 
+let http_delete_options opts =
+  let rec process_http_delete_options opts params headers =
+    match opts with
+        [] -> (params, headers)
+      | (o::os) ->
+          match o with
+            | Http_Delete_rw v ->
+                let param = make_param "rw" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_delete_options os nextreq headers
+            | Http_Delete_r v ->
+                let param = make_param "r" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_delete_options os nextreq headers
+            | Http_Delete_pr v ->
+                let param = make_param "pr" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_delete_options os nextreq headers
+            | Http_Delete_w v ->
+                let param = make_param "w" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_delete_options os nextreq headers
+            | Http_Delete_dw v ->
+                let param = make_param "dw" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_delete_options os nextreq headers
+            | Http_Delete_pw v ->
+                let param = make_param "pw" (string_of_int(v)) in
+                let nextreq = param :: params in
+                  process_http_delete_options os nextreq headers in
+  let (params, headers) = process_http_delete_options opts [] [] in
+  match (List.length params) with
+    | 0 -> ("", headers)
+    | _ ->
+        let joined = join_params params in
+        let paramstring = "?" ^ joined in
+        (paramstring, headers)
 
 let writer accum data =
   Buffer.add_string accum data;
@@ -234,6 +281,13 @@ let riak_http_store_json cparams bucket key vclock options =
 let riak_http_store_text cparams bucket key vclock options =
   let ct = (Http_Store_content_type Content_Type_text_plain :: options) in
   riak_http_store cparams bucket key vclock ct
+
+
+let riak_http_delete cparams bucket key options =
+  let expected_codes = [204; 404] in
+  let (paramstring, headers) = http_delete_options options in
+  let url = delete_url cparams bucket key paramstring in
+    http_op url None expected_codes
 
 let _ =
   http_init();
