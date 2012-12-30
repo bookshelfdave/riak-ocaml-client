@@ -97,6 +97,12 @@ let ping_url cparams =
 let stats_url cparams =
   (base_url cparams) ^ "/stats"
 
+let list_buckets_url cparams =
+  (base_url cparams) ^ "/buckets?buckets=true"
+
+let list_keys_url cparams bucket =
+  (base_url cparams) ^ "/buckets/" ^ bucket ^ "/keys"
+
 let fetch_url cparams bucket key paramstring =
   (base_url cparams) ^  "/buckets/" ^ bucket ^ "/keys/" ^ key ^ paramstring
 
@@ -312,6 +318,31 @@ let riak_http_stats_json cparams =
 
 let riak_http_stats_text cparams =
   riak_http_stats cparams "text/plain"
+
+let riak_http_list_buckets cparams =
+  let expected_codes = [200] in
+  let url = list_buckets_url cparams in
+    http_op url None expected_codes
+
+(* TODO: Make streamy things more... streamy *)
+let riak_http_list_keys cparams bucket stream props =
+  let expected_codes = [200] in
+  let stream_param =
+    (match stream with
+      | true -> make_param "keys" "stream"
+      | false -> make_param "keys" "true") in
+  let props_param =
+    (match props with
+      | true -> make_param "props" "true"
+      | false -> make_param "props" "false") in
+  let param_string = "?" ^ (join_params [stream_param; props_param]) in
+  let url = (list_keys_url cparams bucket) ^ param_string in
+  let connfun conn =
+      Curl.set_httpheader conn ["Content-Type: application/json"];
+      match stream with
+        | true -> Curl.set_httpheader conn ["Transfer-Encoding: chunked"]
+        | false -> () in
+   http_op url (Some connfun) expected_codes
 
 let _ =
   http_init();
