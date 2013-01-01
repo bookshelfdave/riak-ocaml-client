@@ -557,7 +557,7 @@ type riak_search_option =
 ##TODO
     * test search, index
     * better error handling
-	* Next version: support HTTP operations
+	* Next version: support HTTP operations, officially test with OCaml 4
 
 **© 2012 - 2013 Dave Parfitt**
 
