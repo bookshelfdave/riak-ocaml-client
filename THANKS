@@ -1,4 +1,9 @@
 Thanks to:
 Ryland Degnan
 ttps://github.com/rdegnan
-- added an installer
+- oasis installer
+- lwt
+- many other misc features/fixes!
+
+Matthew Tovbin
+- fixes for riak_ping
