@@ -11,15 +11,14 @@ Plugins:     META (0.3), DevFiles (0.3)
 Library riak
   Path:       src
   BuildTools: ocamlbuild
-  FindlibName: riak
-  Modules:    Riak
-  BuildDepends: unix, piqi.runtime, riak-pb
+  Modules:    Riak, Riak_piqi, Riak_kv_piqi, Riak_search_piqi
+  BuildDepends: lwt, lwt.unix, lwt.syntax, piqi.runtime
 
 Executable test
   Path:         test
   BuildTools:   ocamlbuild
   MainIs:       test.ml
-  BuildDepends: unix, piqi.runtime, oUnit, riak
+  BuildDepends: lwt, lwt.unix, lwt.syntax, piqi.runtime, oUnit, riak
   Install:      false
   Build$:       flag(tests)
 
