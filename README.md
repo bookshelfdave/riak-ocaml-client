@@ -48,16 +48,6 @@ opam install riak
 
 ***This will also install the riak-pb dependency***
 
-### Manually Compiling with OPAM
-
-This did the trick for me: 
-
-```
-ocamlfind ocamlc -o RiakTests -package Unix -package oUnit -package piqi.runtime -package riak -linkpkg `opam config -I riak` Foo.ml
-```
-
-If anyone has an easier way to do this, please let me know! I'm not a master of OCaml packages ;-)
-
 ## Tutorial
 
 ###Hello world
@@ -467,7 +457,6 @@ val riak_mapred :
   riak_mr_query ->
   riak_mr_content_type ->
   (string option * int32 option) list Lwt.t
-
 ```
 
 **Example**
@@ -553,6 +542,12 @@ type riak_search_option =
 
 * Please report all bugs and feature requests via Github Issues.
 * Friendly pull requests accepted. Please create a new branch for your features (checkout -b my_branch).
+
+## Thanks
+See THANKS file for more details.
+
+* [Ryland Degnan](https://github.com/rdegnan)
+* [Matthew Tovbin](https://github.com/tovbinm)
 
 ##TODO
     * test search, index
