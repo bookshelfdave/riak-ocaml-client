@@ -12,7 +12,7 @@ Library riak
   Path:       src
   BuildTools: ocamlbuild
   Modules:    Riak, Riak_piqi, Riak_kv_piqi, Riak_search_piqi
-  BuildDepends: lwt, lwt.unix, lwt.syntax, piqi.runtime
+  BuildDepends: lwt, lwt.unix, lwt.syntax, piqi.runtime, riak-pb
 
 Executable test
   Path:         test

@@ -3,7 +3,7 @@
 
  riak.ml: Riak OCaml Client
 
- Copyright (c) 2012 Dave Parfitt
+ Copyright (c) 2012 - 2013 Dave Parfitt
  All Rights Reserved.
 
  This file is provided to you under the Apache License,

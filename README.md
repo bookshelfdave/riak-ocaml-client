@@ -1,9 +1,9 @@
 riak-ocaml-client
 =====
 
-**© 2012 Dave Parfitt**
+**© 2012 - 2013 Dave Parfitt**
 
-riak-ocaml-client is a Riak 1.2 Protobuffs-only client for OCaml 3.12.1. Future versions may support all HTTP operations.
+riak-ocaml-client is a Riak Protobuffs-only client for OCaml 3.12.1. HTTP support is planned for Jan/Feb 2013.
 
 Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 
@@ -14,6 +14,7 @@ Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 * [Protobuffs](http://code.google.com/p/protobuf/)
    * On OSX, `brew install protobuf` if you are using Homebrew
 * [OUnit](http://ounit.forge.ocamlcore.org/)
+* [LWT](http://ocsigen.org/lwt/)
 * [riak-pb](https://github.com/metadave/riak-ocaml-pb)
 
 ## Building from source
@@ -66,34 +67,33 @@ The following program makes a connection to Riak and sends a ping message.
 ```
 open Riak
 open Sys
-open Unix
+open Lwt
+open Lwt_unix
 
-let client() =
-    let conn = riak_connect_with_defaults "127.0.0.1" 8087 in
-    let _ = match riak_ping conn with
-        | true  -> print_endline("Pong")
-        | false -> print_endline("Error")
-    in
-    riak_disconnect conn;
-    exit 0;;
+let test_ping conn =
+  match_lwt riak_ping conn with
+    | true ->
+        print_endline "Pong";
+        return ()
+    | false ->
+        return ()
 
-handle_unix_error client ();;
-
-```
-
-
-Compile this example with the following:
-
-```
-   	ocamlfind ocamlc -o foo -package Unix -package oUnit -package \
-   	    piqi.runtime -package riak -linkpkg foo.ml
-
+let _ =
+  run (
+    let pbip = 10017 in
+    try_lwt
+      lwt conn = riak_connect_with_defaults "127.0.0.1" pbip in
+      lwt _result = test_ping conn in
+      riak_disconnect conn;
+    with Unix.Unix_error (e, _, _) ->
+      print_endline "Pang";
+      return ()
+  )
 ```
 
 **Note**: Change the IP/port to the value defined in the Riak app.config `pb_port` and `pb_ip`.
 
-**Note**: If compiling this example from the same directory as the Riak Ocaml Client source, you may see an error like this:
-`findlib: [WARNING] Interface Riak.cmi occurs in several directories: ., /usr/local/lib/ocaml/site-lib/riak`
+**Note**: The default protobuffs port in Riak 1.3 may change.
 
 ## Development Guide
  
@@ -124,21 +124,21 @@ See ./src/Riak.mli for the complete interface.
 ```
 val riak_connection_defaults : riak_connection_options
 
-val riak_connect_with_defaults : string -> int -> riak_connection
+val riak_connect_with_defaults : string -> int -> riak_connection Lwt.t
 
-val riak_connect : string -> int -> riak_connection_options -> riak_connection
+val riak_connect : string -> int -> riak_connection_options -> riak_connection Lwt.t
 
-val riak_disconnect : riak_connection -> unit
+val riak_disconnect : riak_connection -> unit Lwt.t
 
 ```
 
 To connect using default connection properties: 
 
 ```
-    let conn = riak_connect_with_defaults "127.0.0.1" 8081
+    lwt conn = riak_connect_with_defaults "127.0.0.1" 8081
 ```   
    
-  * **Note**: Pooling of connections isn't implemented, but feel free to roll your own.
+  * **Note**: Pooling of connections isn't implemented, but feel free to roll your own (and submit a PR when you do!)
    
 #####Default connection properties:
 The following defaults are used when calling `riak_connect_with_defaults`.
@@ -152,7 +152,7 @@ To override these values:
 ```
 	let options = 
 	    { riak_connection_defaults with riak_conn_retries=5 } in
-	let conn = riak_connect "127.0.0.1" 8081 options in
+	lwt conn = riak_connect "127.0.0.1" 8081 options in
 	...
 ```
 
@@ -163,44 +163,44 @@ To disconnect:
 ### Ping
 
 ```
-	val riak_ping : riak_connection -> bool
+	val riak_ping : riak_connection -> bool Lwt.t
 ```
 
 **Example**
 
 ```
-	match riak_ping conn with
-    	| true -> ()
+	match_lwt riak_ping conn with
+    	| true -> return ()
     	| false -> assert_failure("Can't connect to Riak")
 ```
 
 ### Client ID
 
 ```
-val riak_get_client_id : riak_connection -> riak_client_id
+val riak_get_client_id : riak_connection -> riak_client_id Lwt.t
 
-val riak_set_client_id : riak_connection -> riak_client_id -> unit
+val riak_set_client_id : riak_connection -> riak_client_id -> unit Lwt.t
 ```
 
 **Example**
 
 ```
 	let test_client_id = "foo" in
-	let _ = riak_set_client_id conn test_client_id in
-	let client_id = riak_get_client_id conn in
+	lwt _ = riak_set_client_id conn test_client_id in
+	lwt client_id = riak_get_client_id conn in
 	...
 ```
 
 ### Server Info
 
 ```
-val riak_get_server_info : riak_connection -> riak_node_id * riak_version
+val riak_get_server_info : riak_connection -> (riak_node_id * riak_version) Lwt.t
 ```
 
 **Example**
 
 ```
-	let (node, version) = riak_get_server_info conn in
+	lwt (node, version) = riak_get_server_info conn in
 ```
 
 ### Get
@@ -211,13 +211,13 @@ val riak_get :
   riak_bucket -> 
   riak_key -> 
   riak_get_option list -> 
-  riak_object option
+  riak_object option Lwt.t
 ```
 
 **Example**	
 
 ```
-let result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_head true] in
+lwt result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_head true] in
 …
 ```
 
@@ -258,20 +258,22 @@ val riak_put :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
+  ?links:Riak_kv_piqi.rpb_link list ->
+  ?usermeta:Riak_piqi.rpb_pair list ->
   string ->
-  riak_put_option list -> 
-  riak_object list
+  riak_put_option list -> riak_object option Lwt.t
 
 val riak_put_raw :
   riak_connection ->
   riak_bucket ->
   riak_key option ->
+  ?links:Riak_kv_piqi.rpb_link list ->
+  ?usermeta:Riak_piqi.rpb_pair list ->
   string ->
-  riak_put_option list -> 
-  riak_vclock option -> 
-  riak_object list
+  riak_put_option list -> riak_vclock option -> riak_object option Lwt.t
 ```
-If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if your key/value is new, use riak_put. riak_put will try and fetch the vclock before updating to limit sibling explosion
+
+If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if your key/value is new, use riak_put. riak_put will try and fetch the vclock before updating to limit sibling explosion.
 
 **Example**
 
@@ -280,14 +282,14 @@ If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if
 ```
  let newkey = "foo" in
  let newval = "bar" in
- riak_put conn bucket (Some newkey) newval [Put_return_body true]
+ lwt objs = riak_put conn bucket (Some newkey) newval [Put_return_body true]
 ```
 
 ```
  let newkey = "foo" in
  let newval = "bar" in
  let existing_vclock = (*Some vclock *)
- riak_put_raw conn bucket (Some newkey) newval [Put_return_body true] existing_vclock
+ lwt objs = riak_put_raw conn bucket (Some newkey) newval [Put_return_body true] existing_vclock
 ```
 
 type riak_put_option =
@@ -326,13 +328,13 @@ type riak_put_option =
 val riak_del :
   riak_connection ->
   riak_bucket ->
-  riak_key -> riak_del_option list -> unit
+  riak_key -> riak_del_option list -> unit Lwt.t
 ```
 
 **Example**
 
 ```
-	riak_del conn bucket "del_test" [] 
+	lwt _ = riak_del conn bucket "del_test" [] in
 ```
 
 type riak_del_option =
@@ -380,46 +382,50 @@ type riak_del_option =
 
 ### List Buckets
 
+***Listing buckets is not recommended in a production environment***
+
 ```
-val riak_list_buckets : riak_connection -> riak_bucket list
+val riak_list_buckets : riak_connection -> riak_bucket list Lwt.t
 ```
 
 **Example**
 
 ```
- let buckets = riak_list_buckets conn in
+ lwt buckets = riak_list_buckets conn in
 ```
 
 ### List Keys
+***Listing keys is not recommended in a production environment***
 
 ```
-val riak_list_keys : riak_connection -> riak_bucket -> riak_key list
+val riak_list_keys : riak_connection -> riak_bucket -> riak_key list Lwt.t
 ```
 
 **Example**
 
 ```
- let keys = riak_list_keys conn "mybucket" in
+ lwt keys = riak_list_keys conn "mybucket" in
 ```
 
 ### Get Bucket Props (limited)
-At the moment, Riak Protobuffs only implement 2 bucket properties, 
+At the moment, Riak Protobuffs only implement 2 bucket properties,
 
   * n_val
   * allow_mult
   
+*Once the HTTP interface is complete, you will have access to the rest of the bucket props.*
   
 ```
 val riak_get_bucket : 
 	riak_connection -> 
 	riak_bucket -> 
-	int32 option * bool option
+	(int32 option * bool option) Lwt.t
 ```
 
 **Example**
 
 ```
- let (n, multi) = riak_get_bucket conn bucket in
+ lwt (n, multi) = riak_get_bucket conn bucket in
       (match n with
         | Some nval -> assert_bool "Valid bucket n value" (nval > 0l)
         | None -> assert_failure "Unexpected default N value");
@@ -434,13 +440,15 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
   * n_val
   * allow_mult
 
+*Once the HTTP interface is complete, you will have access to the rest of the bucket props.*
+
 ```
 val riak_set_bucket : 
     riak_connection -> 
     riak_bucket -> 
     int32 option -> 
     bool option -> 
-    unit
+    unit Lwt.t
 ```
 
 **Example**
@@ -448,7 +456,7 @@ val riak_set_bucket :
 ```
   let n_val = 2l in
   let allow_mult = (Some true) in
-  riak_set_bucket conn bucket n_val allow_mult
+  lwt _ = riak_set_bucket conn bucket n_val allow_mult in
 ```
 
 ### Map/Reduce
@@ -458,7 +466,7 @@ val riak_mapred :
   riak_connection ->
   riak_mr_query ->
   riak_mr_content_type ->
-  (string option * int32 option) list
+  (string option * int32 option) list Lwt.t
 
 ```
 
@@ -475,7 +483,7 @@ val riak_index_eq :
   riak_connection ->
   riak_bucket ->
   riak_2i_name ->
-  riak_key option -> string list
+  riak_key option -> string list Lwt.t
 ```
 
 Secondary index (2i) range query:
@@ -486,12 +494,12 @@ val riak_index_range :
   riak_bucket ->
   riak_2i_name ->
   riak_2i_range_min option ->
-  riak_2i_range_max option -> string list
+  riak_2i_range_max option -> string list Lwt.t
 ```
 
 ### Riak Search
 
-Good luck. This probably needs a little bit of cleanup. Please don't punch me Ryan.
+**This needs cleanup and testing and may not work at the moment**
 
 ```
 val riak_search_query :
@@ -499,9 +507,9 @@ val riak_search_query :
   string ->
   string ->
   riak_search_option list ->
-  (string * string option) list list *
+  ((string * string option) list list *
   Riak_search_piqi.Riak_search_piqi.float32 option *
-  Riak_search_piqi.Riak_search_piqi.uint32 option
+  Riak_search_piqi.Riak_search_piqi.uint32 option) Lwt.t
 ```
 
 
@@ -549,9 +557,9 @@ type riak_search_option =
 ##TODO
     * test search, index
     * better error handling
-	* Next version: support HTTP operations, or better yet, implement all HTTP ops as PB messages in Riak
+	* Next version: support HTTP operations
 
-** © 2012 Dave Parfitt **
+**© 2012 - 2013 Dave Parfitt**
 
-Portions of the documentation are ** © 2012 Basho Technologies **
+Portions of the documentation are **© 2012 - 2012 Basho Technologies**
 
