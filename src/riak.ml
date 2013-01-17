@@ -442,9 +442,6 @@ let send_msg (conn:riak_connection) (req:Piqirun.OBuf.t option) (reqid:int) =
   in
   Lwt_io.flush conn.outc
 
-
-(* returns Piqirun.t *)
-(* TODO: THIS NEEDS CLEANUP! *)
 let recv_msg (conn:riak_connection) (respid:int) =
   lwt resplength = Lwt_chan.input_binary_int conn.inc in
   lwt mcode = map Char.code (Lwt_io.read_char conn.inc) in
@@ -561,7 +558,6 @@ let riak_get_server_info conn =
   in
     riak_multi conn impl
 
-(* TODO: rename *)
 let riak_process_content bucket key vclock item =
   { obj_value = Some item.Rpb_content.value;
     obj_vclock = vclock;
