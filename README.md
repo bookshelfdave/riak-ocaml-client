@@ -557,5 +557,5 @@ See THANKS file for more details.
 
 **© 2012 - 2013 Dave Parfitt**
 
-Portions of the documentation are **© 2012 - 2012 Basho Technologies**
+Portions of the documentation are **© 2012 - 2013 Basho Technologies**
 
