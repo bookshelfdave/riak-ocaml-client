@@ -3,7 +3,8 @@ riak-ocaml-client
 
 **© 2012 - 2013 Dave Parfitt**
 
-riak-ocaml-client is a Riak Protobuffs-only client for OCaml 3.12.1. HTTP support is planned for Jan/Feb 2013.
+riak-ocaml-client is a Riak Protobuffs-only client for OCaml 3.12.1. HTTP support is planned, 
+but I'm working on other projects at the moment.
 
 Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 
