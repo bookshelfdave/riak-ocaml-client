@@ -3,8 +3,7 @@ riak-ocaml-client
 
 **© 2012 - 2013 Dave Parfitt**
 
-riak-ocaml-client is a Riak Protobuffs-only client for OCaml 3.12.1. HTTP support is planned, 
-but I'm working on other projects at the moment.
+riak-ocaml-client is a Riak Protobuffs-only client for OCaml. 
 
 Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 
@@ -38,12 +37,7 @@ make test
 
 ## Installing via OPAM
 
-*This is currently a work in progress. I hope to have this ready for OPAM when this project reaches V1.0.*
-
 ```
-# This line won't be needed when Piqi reaches the main OPAM repo.
-opam remote -add piqi git://github.com/alavrik/piqi-opam-repo.git
-opam remote -add riak git://github.com/metadave/riak-ocaml-client-opam-repo.git
 opam install riak
 ```
 
@@ -488,8 +482,6 @@ val riak_index_range :
 ```
 
 ### Riak Search
-
-**This needs cleanup and testing and may not work at the moment**
 
 ```
 val riak_search_query :
