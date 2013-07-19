@@ -531,6 +531,10 @@ type riak_search_option =
 
 ---
 
+## A note on HTTP operations
+
+As most official Riak clients will only support Protobuffs in the future, HTTP operations aren't supported in the OCaml client (and won't ever be). *This does **NOT** mean that the HTTP interface for Riak is going away.*
+
 ## Contributing
 
 * Please report all bugs and feature requests via Github Issues.
@@ -545,7 +549,7 @@ See THANKS file for more details.
 ##TODO
     * test search, index
     * better error handling
-	* Next version: support HTTP operations, officially test with OCaml 4
+	* Next version: officially test with OCaml 4
 
 **© 2012 - 2013 Dave Parfitt**
 
