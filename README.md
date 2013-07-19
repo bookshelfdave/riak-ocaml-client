@@ -397,9 +397,7 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
 
   * n_val
   * allow_mult
-  
-*Once the HTTP interface is complete, you will have access to the rest of the bucket props.*
-  
+    
 ```
 val riak_get_bucket : 
 	riak_connection -> 
@@ -424,8 +422,6 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
 
   * n_val
   * allow_mult
-
-*Once the HTTP interface is complete, you will have access to the rest of the bucket props.*
 
 ```
 val riak_set_bucket : 
