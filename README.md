@@ -547,7 +547,7 @@ See THANKS file for more details.
     * better error handling
 	* Next version: officially test with OCaml 4
 
-**© 2012 - 2013 Dave Parfitt**
+**© 2012 - 2014 Dave Parfitt**
 
-Portions of the documentation are **© 2012 - 2013 Basho Technologies**
+Portions of the documentation are **© 2012 - 2014 Basho Technologies**
 
