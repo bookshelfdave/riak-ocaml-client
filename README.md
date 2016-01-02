@@ -49,7 +49,7 @@ opam install riak
 
 The following program makes a connection to Riak and sends a ping message. 
 
-```
+``` ocaml
 open Riak
 open Sys
 open Lwt
@@ -86,7 +86,7 @@ let _ =
 
 Throughout the docs, you will find the following types. Almost all are strings:
  
-```
+``` ocaml
 type riak_bucket = string
 type riak_key = string
 type riak_client_id = string
@@ -106,7 +106,7 @@ See ./src/Riak.mli for the complete interface.
  
 ### Connect/Disconnect
 
-```
+``` ocaml
 val riak_connection_defaults : riak_connection_options
 
 val riak_connect_with_defaults : string -> int -> riak_connection Lwt.t
@@ -119,7 +119,7 @@ val riak_disconnect : riak_connection -> unit Lwt.t
 
 To connect using default connection properties: 
 
-```
+``` ocaml
     lwt conn = riak_connect_with_defaults "127.0.0.1" 8081
 ```   
    
@@ -134,7 +134,7 @@ The following defaults are used when calling `riak_connect_with_defaults`.
 
 To override these values:
 
-```
+``` ocaml
 	let options = 
 	    { riak_connection_defaults with riak_conn_retries=5 } in
 	lwt conn = riak_connect "127.0.0.1" 8081 options in
@@ -147,13 +147,13 @@ To disconnect:
 
 ### Ping
 
-```
+``` ocaml
 	val riak_ping : riak_connection -> bool Lwt.t
 ```
 
 **Example**
 
-```
+``` ocaml
 	match_lwt riak_ping conn with
     	| true -> return ()
     	| false -> assert_failure("Can't connect to Riak")
@@ -161,7 +161,7 @@ To disconnect:
 
 ### Client ID
 
-```
+``` ocaml
 val riak_get_client_id : riak_connection -> riak_client_id Lwt.t
 
 val riak_set_client_id : riak_connection -> riak_client_id -> unit Lwt.t
@@ -169,7 +169,7 @@ val riak_set_client_id : riak_connection -> riak_client_id -> unit Lwt.t
 
 **Example**
 
-```
+``` ocaml
 	let test_client_id = "foo" in
 	lwt _ = riak_set_client_id conn test_client_id in
 	lwt client_id = riak_get_client_id conn in
@@ -178,19 +178,19 @@ val riak_set_client_id : riak_connection -> riak_client_id -> unit Lwt.t
 
 ### Server Info
 
-```
+``` ocaml
 val riak_get_server_info : riak_connection -> (riak_node_id * riak_version) Lwt.t
 ```
 
 **Example**
 
-```
+``` ocaml
 	lwt (node, version) = riak_get_server_info conn in
 ```
 
 ### Get
 
-```
+``` ocaml
 val riak_get :
   riak_connection -> 
   riak_bucket -> 
@@ -201,7 +201,7 @@ val riak_get :
 
 **Example**	
 
-```
+``` ocaml
 lwt result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_head true] in
 …
 ```
@@ -238,7 +238,7 @@ lwt result = riak_get conn "my_bucket" "my_key" [Get_basic_quorum false; Get_hea
  
 ### Put
 
-```
+``` ocaml
 val riak_put :
   riak_connection ->
   riak_bucket ->
@@ -264,13 +264,13 @@ If you plan on inserting new key/values, use riak_put_raw. If you aren't sure if
 
 
 
-```
+``` ocaml
  let newkey = "foo" in
  let newval = "bar" in
  lwt objs = riak_put conn bucket (Some newkey) newval [Put_return_body true]
 ```
 
-```
+``` ocaml
  let newkey = "foo" in
  let newval = "bar" in
  let existing_vclock = (*Some vclock *)
@@ -309,7 +309,7 @@ type riak_put_option =
 
 ### Delete
 
-```
+``` ocaml
 val riak_del :
   riak_connection ->
   riak_bucket ->
@@ -318,7 +318,7 @@ val riak_del :
 
 **Example**
 
-```
+``` ocaml
 	lwt _ = riak_del conn bucket "del_test" [] in
 ```
 
@@ -369,26 +369,26 @@ type riak_del_option =
 
 ***Listing buckets is not recommended in a production environment***
 
-```
+``` ocaml
 val riak_list_buckets : riak_connection -> riak_bucket list Lwt.t
 ```
 
 **Example**
 
-```
+``` ocaml
  lwt buckets = riak_list_buckets conn in
 ```
 
 ### List Keys
 ***Listing keys is not recommended in a production environment***
 
-```
+``` ocaml
 val riak_list_keys : riak_connection -> riak_bucket -> riak_key list Lwt.t
 ```
 
 **Example**
 
-```
+``` ocaml
  lwt keys = riak_list_keys conn "mybucket" in
 ```
 
@@ -398,7 +398,7 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
   * n_val
   * allow_mult
     
-```
+``` ocaml
 val riak_get_bucket : 
 	riak_connection -> 
 	riak_bucket -> 
@@ -407,7 +407,7 @@ val riak_get_bucket :
 
 **Example**
 
-```
+``` ocaml
  lwt (n, multi) = riak_get_bucket conn bucket in
       (match n with
         | Some nval -> assert_bool "Valid bucket n value" (nval > 0l)
@@ -423,7 +423,7 @@ At the moment, Riak Protobuffs only implement 2 bucket properties,
   * n_val
   * allow_mult
 
-```
+``` ocaml
 val riak_set_bucket : 
     riak_connection -> 
     riak_bucket -> 
@@ -434,7 +434,7 @@ val riak_set_bucket :
 
 **Example**
 
-```
+``` ocaml
   let n_val = 2l in
   let allow_mult = (Some true) in
   lwt _ = riak_set_bucket conn bucket n_val allow_mult in
@@ -442,7 +442,7 @@ val riak_set_bucket :
 
 ### Map/Reduce
 
-```
+``` ocaml
 val riak_mapred :
   riak_connection ->
   riak_mr_query ->
@@ -458,7 +458,7 @@ See src/test.ml for an example.
 
 Secondary index (2i) exact match query:
 
-```
+``` ocaml
 val riak_index_eq :
   riak_connection ->
   riak_bucket ->
@@ -468,7 +468,7 @@ val riak_index_eq :
 
 Secondary index (2i) range query:
 
-```
+``` ocaml
 val riak_index_range :
   riak_connection ->
   riak_bucket ->
@@ -479,7 +479,7 @@ val riak_index_range :
 
 ### Riak Search
 
-```
+``` ocaml
 val riak_search_query :
   riak_connection ->
   string ->
