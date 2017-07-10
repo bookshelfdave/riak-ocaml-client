@@ -1,6 +1,8 @@
 riak-ocaml-client
 =====
 
+ <img src="http://unmaintained.tech/badge.svg">
+
 **© 2012 - 2013 Dave Parfitt**
 
 riak-ocaml-client is a Riak Protobuffs-only client for OCaml. 
