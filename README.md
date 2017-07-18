@@ -9,7 +9,7 @@ riak-ocaml-client is a Riak Protobuffs-only client for OCaml.
 
 Pretty docs [here](http://metadave.github.com/riak-ocaml-client/).
 
-##Dependencies
+## Dependencies
 
 * [ocamlfind](http://projects.camlcity.org/projects/findlib.html)
 * [Piqi](http://piqi.org/) 
