@@ -47,7 +47,7 @@ opam install riak
 
 ## Tutorial
 
-###Hello world
+### Hello world
 
 The following program makes a connection to Riak and sends a ping message. 
 
